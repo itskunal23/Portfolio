@@ -1,28 +1,34 @@
-name: build-and-deploy
+name: build
+
+# CI only: verifies that every push / PR to main installs from the lockfile,
+# type-checks and builds. Deployment is handled by Vercel's GitHub
+# integration (see vercel.json), so there is no deploy step here.
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  build-and-deploy:
+  build:
     runs-on: ubuntu-latest
 
     env:
       NODE_VERSION: 20
 
     steps:
-      - uses: actions/checkout@v3
-        with:
-          fetch-depth: 0
+      - uses: actions/checkout@v4
 
+      # Version comes from the "packageManager" field in package.json.
       - name: Install pnpm
-        uses: pnpm/action-setup@v2
+        uses: pnpm/action-setup@v4
 
       - name: Setup Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: ${{ env.NODE_VERSION }}
           cache: pnpm
@@ -30,14 +36,5 @@ jobs:
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
 
-      - name: Build site
+      - name: Type-check and build
         run: pnpm build
-
-      - name: Deploy
-        uses: peaceiris/actions-gh-pages@v3
-        with:
-          github_token: ${{ secrets.GITHUB_TOKEN }}
-          publish_dir: dist
-          # Set your custom domain here (or remove this line to use the default
-          # <user>.github.io domain). Also update the canonical/OG URLs in index.html.
-          # cname: your-domain.com
