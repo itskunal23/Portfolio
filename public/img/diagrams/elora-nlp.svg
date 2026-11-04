@@ -1,0 +1,56 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 360" font-family="-apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="ELORA multilingual NLP pipeline: enterprise records in 10+ languages, language detection and spaCy preprocessing, fine-tuned RoBERTa classifiers for theme, sentiment and risk, then embeddings into a ChromaDB semantic search layer with JWT, RBAC, and citation validation.">
+  <defs>
+    <marker id="arr4" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5}
+      .accent{fill:#eff6ff;stroke:#3b82f6}
+      .ok{fill:#f0fdf4;stroke:#22c55e}
+      .t{fill:#0f172a;font-size:14px;font-weight:600}
+      .s{fill:#475569;font-size:11px}
+      .edge{stroke:#64748b;stroke-width:1.5;fill:none}
+      .lbl{fill:#475569;font-size:10px}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="920" height="360" fill="#f8fafc"/>
+  <text x="24" y="34" class="t" font-size="16">Multilingual NLP + semantic search</text>
+  <text x="24" y="54" class="s">Conceptual architecture. 100,000+ records, 10+ languages, validation F1 0.90 → 0.98.</text>
+
+  <rect x="24" y="100" width="150" height="76" rx="10" class="box"/>
+  <text x="99" y="130" text-anchor="middle" class="t">Enterprise records</text>
+  <text x="99" y="148" text-anchor="middle" class="s">10+ languages</text>
+  <text x="99" y="164" text-anchor="middle" class="s">free-text feedback</text>
+
+  <rect x="204" y="100" width="160" height="76" rx="10" class="box"/>
+  <text x="284" y="130" text-anchor="middle" class="t">Detect + spaCy</text>
+  <text x="284" y="148" text-anchor="middle" class="s">language routing</text>
+  <text x="284" y="164" text-anchor="middle" class="s">normalize / tokenize</text>
+
+  <rect x="394" y="92" width="180" height="92" rx="10" class="box accent"/>
+  <text x="484" y="118" text-anchor="middle" class="t">Fine-tuned RoBERTa</text>
+  <text x="484" y="136" text-anchor="middle" class="s">theme classification</text>
+  <text x="484" y="152" text-anchor="middle" class="s">sentiment</text>
+  <text x="484" y="168" text-anchor="middle" class="s">operational risk</text>
+
+  <rect x="604" y="100" width="140" height="76" rx="10" class="box"/>
+  <text x="674" y="130" text-anchor="middle" class="t">Embeddings</text>
+  <text x="674" y="148" text-anchor="middle" class="s">custom vectors</text>
+
+  <rect x="604" y="236" width="290" height="80" rx="10" class="box accent"/>
+  <text x="749" y="262" text-anchor="middle" class="t">ChromaDB semantic search</text>
+  <text x="749" y="280" text-anchor="middle" class="s">JWT auth · RBAC · citation validation</text>
+  <text x="749" y="296" text-anchor="middle" class="s">executive-facing exploration</text>
+
+  <rect x="774" y="100" width="120" height="76" rx="10" class="box ok"/>
+  <circle cx="834" cy="124" r="8" fill="#16a34a"/>
+  <path d="M830 124 l3 3 l5 -6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="834" y="150" text-anchor="middle" class="t">Validation</text>
+  <text x="834" y="167" text-anchor="middle" class="s">F1 0.90 → 0.98</text>
+
+  <path class="edge" d="M174 138 H204" marker-end="url(#arr4)"/>
+  <path class="edge" d="M364 138 H394" marker-end="url(#arr4)"/>
+  <path class="edge" d="M574 138 H604" marker-end="url(#arr4)"/>
+  <path class="edge" d="M744 138 H774" marker-end="url(#arr4)"/>
+  <path class="edge" d="M674 176 V236" marker-end="url(#arr4)"/>
+</svg>

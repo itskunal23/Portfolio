@@ -1,0 +1,55 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 360" font-family="-apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="Defense document intelligence pipeline: AWS S3 artifacts, async FastAPI ingestion in Docker, parsing and chunking, embedding, vector index, and low-latency retrieval API.">
+  <defs>
+    <marker id="arr2" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5}
+      .accent{fill:#eff6ff;stroke:#3b82f6}
+      .ok{fill:#f0fdf4;stroke:#22c55e}
+      .t{fill:#0f172a;font-size:14px;font-weight:600}
+      .s{fill:#475569;font-size:11px}
+      .edge{stroke:#64748b;stroke-width:1.5;fill:none}
+      .lbl{fill:#475569;font-size:10px}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="920" height="360" fill="#f8fafc"/>
+  <text x="24" y="34" class="t" font-size="16">Document ingestion pipeline</text>
+  <text x="24" y="54" class="s">Conceptual architecture. 4,500+ artifacts ingested asynchronously; sub-1.2s P95 retrieval.</text>
+
+  <rect x="24" y="110" width="140" height="70" rx="10" class="box"/>
+  <text x="94" y="140" text-anchor="middle" class="t">AWS S3</text>
+  <text x="94" y="158" text-anchor="middle" class="s">PDF + legacy docs</text>
+
+  <rect x="196" y="100" width="160" height="90" rx="10" class="box accent"/>
+  <text x="276" y="128" text-anchor="middle" class="t">FastAPI (async)</text>
+  <text x="276" y="146" text-anchor="middle" class="s">Dockerized workers</text>
+  <text x="276" y="162" text-anchor="middle" class="s">backpressure + retries</text>
+
+  <rect x="388" y="110" width="150" height="70" rx="10" class="box"/>
+  <text x="463" y="134" text-anchor="middle" class="t">Parse + chunk</text>
+  <text x="463" y="152" text-anchor="middle" class="s">layout-aware</text>
+  <text x="463" y="168" text-anchor="middle" class="s">metadata extraction</text>
+
+  <rect x="570" y="110" width="150" height="70" rx="10" class="box"/>
+  <text x="645" y="140" text-anchor="middle" class="t">Embed</text>
+  <text x="645" y="158" text-anchor="middle" class="s">vector + metadata</text>
+
+  <rect x="752" y="110" width="140" height="70" rx="10" class="box accent"/>
+  <text x="822" y="134" text-anchor="middle" class="t">Vector index</text>
+  <text x="822" y="152" text-anchor="middle" class="s">structured fields</text>
+  <text x="822" y="168" text-anchor="middle" class="s">+ filters</text>
+
+  <rect x="570" y="240" width="320" height="64" rx="10" class="box ok"/>
+  <circle cx="596" cy="266" r="8" fill="#16a34a"/>
+  <path d="M592 266 l3 3 l5 -6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="742" y="268" text-anchor="middle" class="t">Retrieval API: &lt; 1.2s P95</text>
+  <text x="742" y="286" text-anchor="middle" class="s">filtered semantic search over structured vector metadata</text>
+
+  <path class="edge" d="M164 145 H196" marker-end="url(#arr2)"/>
+  <path class="edge" d="M356 145 H388" marker-end="url(#arr2)"/>
+  <path class="edge" d="M538 145 H570" marker-end="url(#arr2)"/>
+  <path class="edge" d="M720 145 H752" marker-end="url(#arr2)"/>
+  <path class="edge" d="M822 180 V220 H730 V240" marker-end="url(#arr2)"/>
+  <text x="330" y="330" class="lbl">Ingestion runs offline and asynchronously; query path stays fast and read-only.</text>
+</svg>

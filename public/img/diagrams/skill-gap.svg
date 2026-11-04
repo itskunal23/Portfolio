@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 920 340" font-family="-apple-system, Segoe UI, Roboto, sans-serif" role="img" aria-label="AI skill gap analysis: workforce skill signals embedded and clustered with unsupervised learning, clusters compared to target role profiles to find gaps, then generative synthesis produces decision-support narratives.">
+  <defs>
+    <marker id="arr6" viewBox="0 0 10 10" refX="9" refY="5" markerWidth="7" markerHeight="7" orient="auto-start-reverse">
+      <path d="M0 0 L10 5 L0 10 z" fill="#64748b"/>
+    </marker>
+    <style>
+      .box{fill:#ffffff;stroke:#cbd5e1;stroke-width:1.5}
+      .accent{fill:#eff6ff;stroke:#3b82f6}
+      .ok{fill:#f0fdf4;stroke:#22c55e}
+      .t{fill:#0f172a;font-size:14px;font-weight:600}
+      .s{fill:#475569;font-size:11px}
+      .edge{stroke:#64748b;stroke-width:1.5;fill:none}
+      .lbl{fill:#475569;font-size:10px}
+    </style>
+  </defs>
+  <rect x="0" y="0" width="920" height="340" fill="#f8fafc"/>
+  <text x="24" y="34" class="t" font-size="16">AI skill gap analysis</text>
+  <text x="24" y="54" class="s">Conceptual architecture. 5-person team, MVP delivered in under six weeks.</text>
+
+  <rect x="24" y="120" width="150" height="76" rx="10" class="box"/>
+  <text x="99" y="150" text-anchor="middle" class="t">Skill signals</text>
+  <text x="99" y="168" text-anchor="middle" class="s">roles · profiles</text>
+  <text x="99" y="184" text-anchor="middle" class="s">workforce data</text>
+
+  <rect x="204" y="120" width="160" height="76" rx="10" class="box accent"/>
+  <text x="284" y="150" text-anchor="middle" class="t">Embed + cluster</text>
+  <text x="284" y="168" text-anchor="middle" class="s">unsupervised</text>
+  <text x="284" y="184" text-anchor="middle" class="s">skill groupings</text>
+
+  <rect x="394" y="120" width="170" height="76" rx="10" class="box"/>
+  <text x="479" y="150" text-anchor="middle" class="t">Gap detection</text>
+  <text x="479" y="168" text-anchor="middle" class="s">clusters vs.</text>
+  <text x="479" y="184" text-anchor="middle" class="s">target role profiles</text>
+
+  <rect x="594" y="120" width="170" height="76" rx="10" class="box accent"/>
+  <text x="679" y="150" text-anchor="middle" class="t">Generative synthesis</text>
+  <text x="679" y="168" text-anchor="middle" class="s">gap narratives</text>
+  <text x="679" y="184" text-anchor="middle" class="s">+ recommendations</text>
+
+  <rect x="594" y="244" width="170" height="60" rx="10" class="box ok"/>
+  <circle cx="616" cy="268" r="8" fill="#16a34a"/>
+  <path d="M612 268 l3 3 l5 -6" fill="none" stroke="#ffffff" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/>
+  <text x="686" y="272" text-anchor="middle" class="t">Decision support</text>
+  <text x="686" y="290" text-anchor="middle" class="s">workforce planning</text>
+
+  <path class="edge" d="M174 158 H204" marker-end="url(#arr6)"/>
+  <path class="edge" d="M364 158 H394" marker-end="url(#arr6)"/>
+  <path class="edge" d="M564 158 H594" marker-end="url(#arr6)"/>
+  <path class="edge" d="M679 196 V244" marker-end="url(#arr6)"/>
+</svg>
