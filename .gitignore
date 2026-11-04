@@ -1,0 +1,16 @@
+*.log
+*.out.txt
+.DS_Store
+.cache/
+node_modules/
+dist/
+.vercel/
+*.tmp
+build_out.txt
+tsc_out.txt
+build_now.txt
+*.tmp.txt
+git_info.log
+v_build.txt
+v_tc.txt
+vb.txt
