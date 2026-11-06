@@ -1,0 +1,16 @@
+{
+  // Cloudflare Workers config for the portfolio: a static Vite SPA served
+  // from Workers Static Assets. An explicit config file disables Wrangler's
+  // framework auto-configuration (which would try to add the Cloudflare
+  // Vite plugin and require Vite >= 6). No Worker script is needed.
+  "$schema": "node_modules/wrangler/config-schema.json",
+  // Must match the Worker name in the Cloudflare dashboard.
+  "name": "portfolio",
+  "compatibility_date": "2026-11-04",
+  "assets": {
+    // Output of `pnpm build` (vite build).
+    "directory": "./dist",
+    // Serve index.html for unknown paths so client-side routes resolve.
+    "not_found_handling": "single-page-application"
+  }
+}
