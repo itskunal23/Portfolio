@@ -5,6 +5,7 @@
 node_modules/
 dist/
 .vercel/
+.wrangler/
 *.tmp
 build_out.txt
 tsc_out.txt
