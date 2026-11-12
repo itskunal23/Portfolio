@@ -1,16 +1,18 @@
 {
-  // Cloudflare Workers config for the portfolio: a static Vite SPA served
-  // from Workers Static Assets. An explicit config file disables Wrangler's
-  // framework auto-configuration (which would try to add the Cloudflare
-  // Vite plugin and require Vite >= 6). No Worker script is needed.
+  // Cloudflare Workers config for Kunal Goenka's portfolio: a statically
+  // generated Astro site served from Workers Static Assets. No Worker script
+  // is needed. An explicit config file also disables Wrangler's framework
+  // auto-configuration.
   "$schema": "node_modules/wrangler/config-schema.json",
   // Must match the Worker name in the Cloudflare dashboard.
   "name": "portfolio",
   "compatibility_date": "2026-11-04",
   "assets": {
-    // Output of `pnpm build` (vite build).
+    // Output of `pnpm build` (astro build).
     "directory": "./dist",
-    // Serve index.html for unknown paths so client-side routes resolve.
-    "not_found_handling": "single-page-application"
+    // Every route is a real prerendered page, so unknown paths get the
+    // generated 404.html with a 404 status (not an SPA fallback).
+    "not_found_handling": "404-page",
+    "html_handling": "auto-trailing-slash"
   }
 }

@@ -1,0 +1,784 @@
+---
+import Base from "~/layouts/Base.astro";
+import { profile, topSkills } from "~/data/profile";
+import { experience, recognition } from "~/data/experience";
+import { education } from "~/data/education";
+import { expertise } from "~/data/expertise";
+
+// The résumé is rendered from the same data as the rest of the site, so it
+// can never drift from LinkedIn. No phone number, by design.
+const range = (a: string, b: string) => `${a} to ${b}`;
+---
+
+<Base
+  path="/resume/"
+  title="Résumé"
+  description="Kunal Goenka's résumé: Data Scientist in Enterprise AI & Data at Boeing, building agentic RAG, MCP integrations, and NLP systems. MS Computer Science (AI) at Georgia Tech."
+>
+  <div class="desk" data-resume>
+    <div class="wrap top">
+      <h1>Résumé</h1>
+      <div class="controls" role="group" aria-label="Résumé controls">
+        <div class="segments" role="group" aria-label="Side of the page" hidden>
+          <button type="button" data-side="front" aria-pressed="true">Experience</button>
+          <button type="button" data-side="back" aria-pressed="false">Education and skills</button>
+        </div>
+        <button type="button" class="ghost" data-skip hidden>Skip typing</button>
+        <a class="button" href={profile.links.resume} download>Download PDF</a>
+      </div>
+    </div>
+
+    <div class="stage">
+      <div class="sheet" data-sheet>
+        <article class="face front" data-face="front" aria-label="Résumé, experience">
+          <header class="masthead" data-type-group>
+            <p class="name" data-type="slow">{profile.name}</p>
+            <p class="role" data-type>{profile.role}</p>
+            <ul class="contact">
+              <li><a href={`mailto:${profile.email}`} data-type>{profile.email}</a></li>
+              <li><a href={profile.links.linkedin} rel="me" data-type>linkedin.com/in/kunalgoenka23</a></li>
+              <li><a href={profile.links.github} rel="me" data-type>github.com/itskunal23</a></li>
+              <li data-type>{profile.location}</li>
+            </ul>
+            <p class="summary" data-type>{profile.summary}</p>
+          </header>
+
+          <section data-type-group aria-labelledby="r-exp">
+            <h2 id="r-exp" data-type="slow">Experience</h2>
+            {
+              experience.map((emp) =>
+                emp.roles.map((r) => (
+                  <div class="entry">
+                    <div class="entry-head">
+                      <h3 data-type>
+                        {r.title}, {emp.org}
+                      </h3>
+                      <p class="when" data-type>
+                        {range(r.start, r.end)}
+                      </p>
+                    </div>
+                    <p class="meta" data-type>
+                      {[r.team, r.location].filter(Boolean).join(", ")}
+                    </p>
+                    <ul class="points">
+                      {r.points.map((pt) => (
+                        <li data-type>{pt}</li>
+                      ))}
+                    </ul>
+                  </div>
+                ))
+              )
+            }
+          </section>
+        </article>
+
+        <article class="face back" data-face="back" aria-label="Résumé, education and skills">
+          <section data-type-group aria-labelledby="r-edu">
+            <h2 id="r-edu" data-type="slow">Education</h2>
+            {
+              education.map((e) => (
+                <div class="entry">
+                  <div class="entry-head">
+                    <h3 data-type>{e.school}</h3>
+                    <p class="when" data-type>
+                      {range(e.start, e.end)}
+                    </p>
+                  </div>
+                  <p class="meta" data-type>
+                    {e.degree}. {e.focus}. {e.status}.
+                  </p>
+                </div>
+              ))
+            }
+          </section>
+
+          <section data-type-group aria-labelledby="r-skills">
+            <h2 id="r-skills" data-type="slow">Skills</h2>
+            <p class="top-skills" data-type>
+              {topSkills.join(", ")}
+            </p>
+            <dl class="skills">
+              {
+                expertise.map((x) => (
+                  <div>
+                    <dt data-type>{x.area}</dt>
+                    <dd data-type>{x.tools.join(", ")}</dd>
+                  </div>
+                ))
+              }
+            </dl>
+          </section>
+
+          <section data-type-group aria-labelledby="r-rec">
+            <h2 id="r-rec" data-type="slow">Recognition</h2>
+            {
+              recognition.map((r) => (
+                <div class="entry">
+                  <h3 data-type>
+                    {r.title}, {r.org}
+                  </h3>
+                  <p class="meta" data-type>
+                    {r.body}
+                  </p>
+                </div>
+              ))
+            }
+          </section>
+
+          <section data-type-group aria-labelledby="r-act">
+            <h2 id="r-act" data-type="slow">Activities</h2>
+            <p class="meta" data-type>
+              {education[1].activities.join("; ")}
+            </p>
+          </section>
+        </article>
+      </div>
+    </div>
+    <script is:inline>
+      // Runs before first paint. With JS, only one side shows at a time, and
+      // the text the typewriter will type starts hidden (colour only, so the
+      // layout is identical). Without JS, both sides are simply on the page.
+      (() => {
+        const r = document.currentScript.parentElement;
+        r.querySelector('[data-face="back"]').hidden = true;
+        r.querySelector(".segments").hidden = false;
+        if (window.CSS && CSS.highlights && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
+          r.classList.add("tw");
+          r.querySelector("[data-skip]").hidden = false;
+        }
+      })();
+    </script>
+  </div>
+</Base>
+
+
+<script>
+  // Typewriter, page turn, and tilt. Without JS, with reduced motion, or in
+  // a browser without CSS highlights, every word is simply on the page.
+  const root = document.querySelector<HTMLElement>("[data-resume]");
+  if (root) {
+    const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
+    const typing = root.classList.contains("tw");
+    const sheet = root.querySelector<HTMLElement>("[data-sheet]")!;
+    const faces = {
+      front: root.querySelector<HTMLElement>('[data-face="front"]')!,
+      back: root.querySelector<HTMLElement>('[data-face="back"]')!
+    };
+    const skip = root.querySelector<HTMLButtonElement>("[data-skip]")!;
+    let side: "front" | "back" = "front";
+
+    interface Line {
+      node: HTMLElement;
+      text: Text;
+      untyped: Range;
+      cps: number;
+    }
+    interface Group {
+      face: "front" | "back";
+      el: HTMLElement;
+      lines: Line[] | null;
+      state: "idle" | "queued" | "done";
+    }
+
+    const groups: Group[] = [];
+    for (const face of ["front", "back"] as const)
+      for (const el of faces[face].querySelectorAll<HTMLElement>("[data-type-group]"))
+        groups.push({ face, el, lines: null, state: "idle" });
+
+    const hidden = typing ? new Highlight() : null;
+    if (hidden) CSS.highlights.set("tw-untyped", hidden);
+
+    // One caret per side, moved with a transform to the end of the typed text.
+    const carets = new Map<HTMLElement, HTMLElement>();
+    const caretFor = (face: HTMLElement) => {
+      let c = carets.get(face);
+      if (!c) {
+        c = document.createElement("span");
+        c.className = "caret";
+        c.setAttribute("aria-hidden", "true");
+        c.hidden = true;
+        face.append(c);
+        carets.set(face, c);
+      }
+      return c;
+    };
+    const probe = document.createRange();
+    const placeCaret = (l: Line, n: number) => {
+      const face = faces[side];
+      const c = caretFor(face);
+      probe.setStart(l.text, Math.max(0, n - 1));
+      probe.setEnd(l.text, Math.max(1, n));
+      const rects = probe.getClientRects();
+      const r = rects[rects.length - 1];
+      if (!r) return;
+      const f = face.getBoundingClientRect();
+      const h = `${Math.round(r.height)}px`;
+      if (c.style.height !== h) c.style.height = h;
+      c.style.transform = `translate(${r.right - f.left + 1}px, ${r.top - f.top}px)`;
+      c.hidden = false;
+    };
+
+    // Lines wait hidden by CSS. The line being typed is shown, and a range in
+    // the highlight covers the part still to type; typing moves the range's
+    // start. Only that one line is ever repainted, and nothing relayouts.
+    const prepare = (g: Group) => {
+      g.lines = [...g.el.querySelectorAll<HTMLElement>("[data-type]")].flatMap((node) => {
+        node.normalize();
+        const text = node.firstChild;
+        if (!(text instanceof Text) || !text.data.length) {
+          node.classList.add("tw-ready");
+          return [];
+        }
+        const untyped = document.createRange();
+        untyped.selectNodeContents(text);
+        return [{ node, text, untyped, cps: node.dataset.type === "slow" ? 32 : 650 }];
+      });
+    };
+    const startLine = (l: Line) => {
+      hidden!.clear();
+      hidden!.add(l.untyped);
+      l.node.classList.add("tw-ready");
+    };
+    const finishLine = (l: Line) => {
+      hidden?.delete(l.untyped);
+      l.node.classList.add("tw-ready");
+    };
+
+    const queue: Group[] = [];
+    let raf = 0;
+    let current: { g: Group; i: number; t0: number } | null = null;
+    let last = 0;
+
+    const finishAll = () => {
+      cancelAnimationFrame(raf);
+      raf = 0;
+      queue.length = 0;
+      current = null;
+      hidden?.clear();
+      for (const g of groups) {
+        g.lines?.forEach(finishLine);
+        g.state = "done";
+      }
+      for (const c of carets.values()) c.hidden = true;
+      root.classList.remove("tw");
+      skip.hidden = true;
+    };
+
+    // One rAF loop types the queued sections in order, line by line.
+    const tick = (now: number) => {
+      raf = 0;
+      // About 30 updates a second: smooth for type, half the paint work.
+      if (now - last < 30) {
+        raf = requestAnimationFrame(tick);
+        return;
+      }
+      last = now;
+      if (!current) {
+        const g = queue.shift();
+        if (!g) return;
+        current = { g, i: 0, t0: now };
+      }
+      const { g } = current;
+      const line = g.lines![current.i];
+      if (!line) {
+        g.state = "done";
+        current = null;
+      } else {
+        const len = line.text.data.length;
+        const n = Math.min(len, Math.floor(((now - current.t0) / 1000) * line.cps) + 1);
+        if (n >= len) {
+          finishLine(line);
+          current = { g, i: current.i + 1, t0: now };
+        } else {
+          if (!line.node.classList.contains("tw-ready")) startLine(line);
+          line.untyped.setStart(line.text, n);
+        }
+        placeCaret(line, n);
+      }
+      if (current || queue.length) raf = requestAnimationFrame(tick);
+      else {
+        for (const c of carets.values()) c.hidden = true;
+        if (groups.every((x) => x.state === "done")) skip.hidden = true;
+      }
+    };
+
+    const enqueue = (g: Group) => {
+      if (g.state !== "idle" || g.face !== side) return;
+      if (!g.lines) prepare(g);
+      g.state = "queued";
+      queue.push(g);
+      if (!raf) raf = requestAnimationFrame(tick);
+    };
+    const enqueueVisible = () => {
+      for (const g of groups) {
+        if (g.face !== side) continue;
+        const r = g.el.getBoundingClientRect();
+        if (r.top < innerHeight * 0.9 && r.bottom > 0) enqueue(g);
+      }
+    };
+
+    if (typing) {
+      // Each section types itself as it scrolls into view.
+      const io = new IntersectionObserver(
+        (entries) => {
+          for (const e of entries) {
+            if (!e.isIntersecting) continue;
+            const g = groups.find((x) => x.el === e.target);
+            if (g) enqueue(g);
+          }
+        },
+        { rootMargin: "0px 0px -10% 0px" }
+      );
+      groups.forEach((g) => io.observe(g.el));
+      skip.addEventListener("click", finishAll);
+      // Printing (or saving as PDF) always gets the whole page.
+      window.addEventListener("beforeprint", finishAll);
+    } else {
+      skip.hidden = true;
+    }
+
+    // Turn the page: the sheet swings edge-on, the sides swap, and it swings
+    // back. Only the side that is showing is in the document's flow.
+    const buttons = [...root.querySelectorAll<HTMLButtonElement>("[data-side]")];
+    let turning = false;
+    const swap = (next: "front" | "back") => {
+      side = next;
+      faces.front.hidden = next !== "front";
+      faces.back.hidden = next !== "back";
+      for (const c of carets.values()) c.hidden = true;
+      if (sheet.getBoundingClientRect().top < 0) sheet.scrollIntoView({ block: "start" });
+    };
+    const show = async (next: "front" | "back") => {
+      if (next === side || turning) return;
+      for (const b of buttons) b.setAttribute("aria-pressed", String(b.dataset.side === next));
+      const dir = next === "back" ? 1 : -1;
+      if (reduce) {
+        swap(next);
+      } else {
+        turning = true;
+        const base = getComputedStyle(sheet).transform;
+        const from = base === "none" ? "" : base;
+        await sheet.animate([{ transform: from || "none" }, { transform: `rotateY(${90 * dir}deg)` }], {
+          duration: 260,
+          easing: "cubic-bezier(0.5, 0, 0.75, 0)"
+        }).finished;
+        swap(next);
+        await sheet.animate([{ transform: `rotateY(${-90 * dir}deg)` }, { transform: from || "none" }], {
+          duration: 380,
+          easing: "cubic-bezier(0.2, 0.8, 0.2, 1)"
+        }).finished;
+        turning = false;
+      }
+      if (typing) enqueueVisible();
+    };
+    for (const b of buttons) b.addEventListener("click", () => void show(b.dataset.side as "front" | "back"));
+
+    // Gentle tilt toward the pointer: mouse only, rAF-throttled, compositor only.
+    if (!reduce && window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+      let pending = 0;
+      root.addEventListener("pointermove", (e) => {
+        if (pending || turning) return;
+        pending = requestAnimationFrame(() => {
+          pending = 0;
+          const x = e.clientX / innerWidth - 0.5;
+          const y = e.clientY / innerHeight - 0.5;
+          sheet.style.setProperty("--ry", `${(x * 5).toFixed(2)}deg`);
+          sheet.style.setProperty("--rx", `${(-y * 2.5).toFixed(2)}deg`);
+        });
+      });
+      root.addEventListener("pointerleave", () => {
+        sheet.style.setProperty("--ry", "0deg");
+        sheet.style.setProperty("--rx", "0deg");
+      });
+    }
+  }
+</script>
+
+<style>
+  .desk {
+    --paper: #ffffff;
+    --paper-ink: #1d1d1f;
+    --paper-ink-2: #6e6e73;
+    --paper-rule: #d2d2d7;
+    --paper-link: #0066cc;
+    padding-block: clamp(2rem, 1.5rem + 2vw, 3.5rem) clamp(4rem, 3rem + 4vw, 7rem);
+    background: var(--sunken);
+  }
+
+  .top {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 1rem 2rem;
+    max-width: 920px;
+  }
+
+  h1 {
+    font-size: var(--step-4);
+  }
+
+  .controls {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem;
+  }
+
+  /* Apple segmented control. */
+  .segments {
+    display: inline-flex;
+    padding: 3px;
+    border-radius: 999px;
+    background: color-mix(in srgb, var(--ink) 8%, transparent);
+  }
+
+  .segments button {
+    min-height: 44px;
+    padding: 0.3rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: transparent;
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 500;
+    cursor: pointer;
+    transition: background-color 200ms var(--ease), box-shadow 200ms var(--ease);
+  }
+
+  .segments button[aria-pressed="true"] {
+    background: var(--surface);
+    box-shadow: 0 1px 3px rgb(0 0 0 / 0.14), 0 0 0 0.5px rgb(0 0 0 / 0.06);
+    font-weight: 600;
+  }
+
+  .ghost {
+    min-height: 44px;
+    padding: 0.3rem 0.9rem;
+    border: 0;
+    background: transparent;
+    color: var(--auto);
+    font: inherit;
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    .ghost:hover {
+      text-decoration: underline;
+    }
+  }
+
+  .segments[hidden],
+  .ghost[hidden] {
+    display: none;
+  }
+
+  /* The 3D sheet. */
+  .stage {
+    max-width: 920px;
+    margin: clamp(1.5rem, 1rem + 2vw, 2.5rem) auto 0;
+    padding-inline: var(--gutter, 16px);
+    perspective: 2400px;
+    perspective-origin: 50% 0;
+  }
+
+  /* One flat sheet in a perspective stage: it tilts toward the pointer and
+     turns edge-on to change sides. No preserve-3d and no stacked layers, so
+     the page repaints as a single, cheap surface while it types. */
+  .sheet {
+    position: relative;
+    transform: rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg));
+    transition: transform 600ms cubic-bezier(0.3, 0.9, 0.2, 1);
+  }
+
+  .face {
+    position: relative;
+    min-width: 0;
+    padding: clamp(1.5rem, 0.75rem + 4vw, 4rem);
+    overflow-wrap: break-word;
+    border-radius: 6px;
+    background: var(--paper);
+    color: var(--paper-ink);
+    /* The sheet, plus two sheets peeking out beneath it. */
+    box-shadow:
+      0 0 0 0.5px rgb(0 0 0 / 0.08),
+      0 6px 0 -2px #f7f7f9,
+      0 6px 0 -1.5px rgb(0 0 0 / 0.08),
+      0 12px 0 -4px #efeff2,
+      0 12px 0 -3.5px rgb(0 0 0 / 0.06),
+      0 24px 40px -20px rgb(0 0 0 / 0.3);
+  }
+
+  .face[hidden] {
+    display: none;
+  }
+
+  /* The typing caret: one element, moved with a transform. */
+  .face :global(.caret) {
+    position: absolute;
+    top: 0;
+    left: 0;
+    width: 2px;
+    border-radius: 1px;
+    background: var(--paper-link);
+    pointer-events: none;
+    animation: blink 1s steps(1) infinite;
+  }
+
+  .masthead {
+    padding-bottom: 1.5rem;
+    border-bottom: 1px solid var(--paper-rule);
+  }
+
+  .name {
+    font-size: clamp(2rem, 1.4rem + 2.5vw, 3rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
+  .role {
+    margin-top: 0.35rem;
+    font-size: var(--step-1);
+    color: var(--paper-ink-2);
+  }
+
+  .contact {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    margin-top: 0.9rem;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--paper-ink-2);
+  }
+
+  .summary {
+    margin-top: 1rem;
+    max-width: 68ch;
+  }
+
+  .contact a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+    color: var(--paper-link);
+    text-decoration: none;
+  }
+
+  /* Touch screens get Apple's 44pt minimum; print and desktop stay compact. */
+  @media (pointer: coarse) {
+    .contact a {
+      min-height: 44px;
+    }
+  }
+
+  @media (hover: hover) {
+    .contact a:hover {
+      text-decoration: underline;
+    }
+  }
+
+  section {
+    margin-top: 2rem;
+  }
+
+  .back section:first-child {
+    margin-top: 0;
+  }
+
+  h2 {
+    padding-bottom: 0.4rem;
+    border-bottom: 1px solid var(--paper-rule);
+    font: 600 var(--step--1) / 1.4 ui-monospace, Menlo, Consolas, monospace;
+    letter-spacing: 0.02em;
+    color: var(--paper-ink-2);
+  }
+
+  .entry {
+    margin-top: 1.4rem;
+    break-inside: avoid;
+  }
+
+  .entry-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    justify-content: space-between;
+    gap: 0 1rem;
+  }
+
+  h3 {
+    font-size: var(--step-1);
+    letter-spacing: -0.015em;
+  }
+
+  .when {
+    font: 500 var(--step--1) / 1.4 ui-monospace, Menlo, Consolas, monospace;
+    color: var(--paper-ink-2);
+  }
+
+  .meta {
+    margin-top: 0.2rem;
+    color: var(--paper-ink-2);
+    font-size: var(--step--1);
+  }
+
+  .points {
+    margin-top: 0.6rem;
+    padding-left: 1.1rem;
+    display: grid;
+    gap: 0.45rem;
+  }
+
+  .points li::marker {
+    color: var(--paper-ink-2);
+  }
+
+  .top-skills {
+    margin-top: 1rem;
+    font-weight: 600;
+  }
+
+  .skills {
+    display: grid;
+    gap: 0.9rem;
+    margin-top: 1rem;
+  }
+
+  .skills dt {
+    font-weight: 600;
+  }
+
+  .skills dd {
+    margin: 0.1rem 0 0;
+    color: var(--paper-ink-2);
+  }
+
+  /* Typewriter. Untyped text is hidden with the CSS Custom Highlight API:
+     a paint-only effect, so the words never move and nothing relayouts. */
+  .tw .face [data-type] {
+    color: transparent;
+  }
+
+  .tw .face [data-type].tw-ready {
+    color: inherit;
+  }
+
+  :global(::highlight(tw-untyped)) {
+    color: transparent;
+  }
+
+  @keyframes blink {
+    50% {
+      opacity: 0;
+    }
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .stage {
+      animation: sheet-in 900ms cubic-bezier(0.2, 0.8, 0.2, 1) both;
+    }
+    @keyframes sheet-in {
+      from {
+        opacity: 0;
+        transform: translateY(40px) rotateX(16deg);
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .sheet {
+      transition: none;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .controls {
+      width: 100%;
+    }
+    .segments {
+      flex: 1 1 100%;
+    }
+    .segments button {
+      flex: 1;
+    }
+  }
+
+  /* Print, and the generated PDF: both sides, flat, on Letter paper. */
+  @media print {
+    @page {
+      size: letter;
+      margin: 0.5in 0.55in;
+    }
+    .desk {
+      padding: 0;
+      background: none;
+    }
+    .top {
+      display: none;
+    }
+    .stage {
+      max-width: none;
+      margin: 0;
+      padding: 0;
+      perspective: none;
+      animation: none;
+    }
+    .sheet {
+      display: block;
+      transform: none;
+      transition: none;
+    }
+    .face :global(.caret) {
+      display: none;
+    }
+    .face[hidden] {
+      display: block;
+    }
+    .tw .face [data-type] {
+      color: inherit;
+    }
+    :global(::highlight(tw-untyped)) {
+      color: inherit;
+    }
+    .face {
+      padding: 0;
+      box-shadow: none;
+      transform: none;
+      font-size: 10pt;
+      line-height: 1.38;
+    }
+    .back {
+      margin-top: 14pt;
+    }
+    .name {
+      font-size: 22pt;
+    }
+    .role,
+    h3 {
+      font-size: 11pt;
+    }
+    h2,
+    .when,
+    .meta,
+    .contact {
+      font-size: 9pt;
+    }
+    .contact a {
+      min-height: 0;
+    }
+    section {
+      margin-top: 12pt;
+    }
+    .entry {
+      margin-top: 8pt;
+    }
+    .points {
+      gap: 2pt;
+      margin-top: 3pt;
+    }
+  }
+</style>

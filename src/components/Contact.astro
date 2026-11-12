@@ -1,0 +1,198 @@
+---
+import { profile } from "~/data/profile";
+const year = new Date().getFullYear();
+---
+
+<footer id="contact" class="contact">
+  <div class="wrap">
+    <div class="grid">
+      <div class="lead">
+        <h2>Get in touch</h2>
+        <p>
+          I'm interested in AI engineering and software engineering roles where I can build intelligent features into
+          real products, from the backend systems and AI architecture to the applications people use.
+        </p>
+      </div>
+      <div class="channels">
+        <div class="email">
+          <a class="address" href={`mailto:${profile.email}`}>{profile.email}</a>
+          <button class="copy" type="button" data-copy={profile.email} hidden>
+            <span data-label>Copy email</span>
+          </button>
+          <span class="visually-hidden" role="status" data-status></span>
+        </div>
+        <ul class="links">
+          <li><a href={profile.links.linkedin} rel="me noopener" target="_blank">LinkedIn<span class="visually-hidden"> (opens in a new tab)</span></a></li>
+          <li><a href={profile.links.github} rel="me noopener" target="_blank">GitHub<span class="visually-hidden"> (opens in a new tab)</span></a></li>
+          <li><a href="/resume/">Résumé</a></li>
+        </ul>
+      </div>
+    </div>
+    <div class="colophon">
+      <p>© {year} Kunal Goenka. Designed and built by Kunal Goenka.</p>
+      <p><a href={profile.links.repo} target="_blank" rel="noopener">Source on GitHub<span class="visually-hidden"> (opens in a new tab)</span></a></p>
+    </div>
+  </div>
+</footer>
+
+<script>
+  // Progressive enhancement: the button only appears when the clipboard API is available.
+  for (const button of document.querySelectorAll<HTMLButtonElement>("[data-copy]")) {
+    if (!navigator.clipboard) continue;
+    button.hidden = false;
+    const label = button.querySelector<HTMLElement>("[data-label]")!;
+    const status = button.parentElement!.querySelector<HTMLElement>("[data-status]")!;
+    let timer = 0;
+    button.addEventListener("click", async () => {
+      try {
+        await navigator.clipboard.writeText(button.dataset.copy!);
+        label.textContent = "Copied";
+        status.textContent = "Email address copied to clipboard";
+      } catch {
+        label.textContent = "Copy failed. Select the address instead.";
+        status.textContent = label.textContent;
+      }
+      clearTimeout(timer);
+      timer = window.setTimeout(() => {
+        label.textContent = "Copy email";
+        status.textContent = "";
+      }, 2400);
+    });
+  }
+</script>
+
+<style>
+  .contact {
+    --c-bg: var(--ink);
+    --c-fg: var(--bg);
+    /* The bottom clears the iPhone home indicator. */
+    padding-block: clamp(4rem, 3rem + 4vw, 7rem) calc(2rem + env(safe-area-inset-bottom));
+    background: var(--c-bg);
+    color: var(--c-fg);
+  }
+
+  .grid {
+    display: grid;
+    grid-template-columns: minmax(0, 1.1fr) minmax(0, 1fr);
+    gap: clamp(2rem, 1rem + 4vw, 5rem);
+    align-items: end;
+  }
+
+  h2 {
+    font-size: var(--step-5);
+    letter-spacing: -0.035em;
+  }
+
+  .lead p {
+    margin-top: 1.25rem;
+    max-width: 34rem;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: color-mix(in srgb, var(--c-fg) 78%, var(--c-bg));
+  }
+
+  .email {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+  }
+
+  .address {
+    font-size: var(--step-3);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.18em;
+    text-decoration-color: var(--human-fill);
+    overflow-wrap: anywhere;
+    /* A full 44pt touch target, per Apple's minimum. */
+    display: inline-block;
+    padding-block: 0.15em;
+  }
+
+  @media (hover: hover) {
+    .address:hover {
+      color: var(--human-fill);
+    }
+  }
+
+  .copy {
+    min-height: 44px;
+    padding: 0.4rem 0.9rem;
+    border: 1px solid color-mix(in srgb, var(--c-fg) 35%, transparent);
+    border-radius: 999px;
+    background: transparent;
+    color: inherit;
+    font: inherit;
+    font-size: var(--step--1);
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    .copy:hover {
+      border-color: var(--c-fg);
+    }
+  }
+
+  .links {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.5rem 1.75rem;
+    margin-top: 1.5rem;
+    list-style: none;
+  }
+
+  .links a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    font-weight: 500;
+  }
+
+  @media (hover: hover) {
+    .links a:hover,
+    .colophon a:hover {
+      color: var(--human-fill);
+    }
+  }
+
+  .colophon {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: 0.5rem 2rem;
+    margin-top: clamp(3rem, 2rem + 4vw, 6rem);
+    padding-top: 1.25rem;
+    border-top: 1px solid color-mix(in srgb, var(--c-fg) 18%, transparent);
+    font-size: var(--step--1);
+    color: color-mix(in srgb, var(--c-fg) 70%, var(--c-bg));
+  }
+
+  .colophon a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  :focus-visible {
+    outline-color: var(--human-fill);
+  }
+
+  @media (prefers-color-scheme: dark) {
+    .contact {
+      --c-bg: var(--sunken);
+      --c-fg: var(--ink);
+      border-top: 1px solid var(--rule);
+    }
+  }
+
+  @media (max-width: 820px) {
+    .grid {
+      grid-template-columns: 1fr;
+      align-items: start;
+    }
+  }
+</style>

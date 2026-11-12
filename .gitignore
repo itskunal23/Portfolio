@@ -15,3 +15,6 @@ git_info.log
 v_build.txt
 v_tc.txt
 vb.txt
+.astro/
+test-results/
+playwright-report/

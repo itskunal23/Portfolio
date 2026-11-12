@@ -1,0 +1,100 @@
+---
+import "~/styles/global.css";
+import Header from "~/components/Header.astro";
+import Contact from "~/components/Contact.astro";
+import RoleFit from "~/components/RoleFit.astro";
+import { profile } from "~/data/profile";
+
+interface Props {
+  title?: string;
+  description?: string;
+  /** Path of the current page, used for canonical URL and nav state. */
+  path: string;
+  /** Extra JSON-LD objects for this page. */
+  schema?: object[];
+  noindex?: boolean;
+}
+
+const { title, description = profile.description, path, schema = [], noindex = false } = Astro.props;
+const fullTitle = title ? `${title} | Kunal Goenka` : "Kunal Goenka | Agentic AI engineer at Boeing";
+const canonical = new URL(path, Astro.site).toString();
+const ogImage = new URL("/og.png", Astro.site).toString();
+
+const person = {
+  "@context": "https://schema.org",
+  "@type": "Person",
+  "@id": new URL("/#person", Astro.site).toString(),
+  name: profile.name,
+  url: new URL("/", Astro.site).toString(),
+  image: new URL("/kunal-goenka.jpg", Astro.site).toString(),
+  jobTitle: "Data Scientist, Enterprise AI & Data",
+  worksFor: { "@type": "Organization", name: "Boeing" },
+  alumniOf: [
+    { "@type": "CollegeOrUniversity", name: "Virginia Tech" }
+  ],
+  affiliation: { "@type": "CollegeOrUniversity", name: "Georgia Institute of Technology" },
+  knowsAbout: ["Agentic AI", "Retrieval-augmented generation", "Model Context Protocol", "Natural language processing", "Full-stack development"],
+  email: `mailto:${profile.email}`,
+  sameAs: [profile.links.linkedin, profile.links.github]
+};
+---
+
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8" />
+    <!-- viewport-fit=cover lets the page use the full iPhone screen; safe-area
+         insets in global.css keep content clear of the notch and home bar. -->
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+    <script is:inline>
+      // Apply the saved mode before first paint so nothing flashes.
+      try {
+        if (localStorage.getItem("mode") === "engineer") document.documentElement.dataset.mode = "engineer";
+      } catch {
+        /* storage unavailable */
+      }
+    </script>
+    <title>{fullTitle}</title>
+    <meta name="description" content={description} />
+    <meta name="author" content="Kunal Goenka" />
+    <link rel="canonical" href={canonical} />
+    {noindex && <meta name="robots" content="noindex" />}
+    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <meta name="theme-color" content="#000000" media="(prefers-color-scheme: dark)" />
+
+    <meta property="og:type" content="website" />
+    <meta property="og:site_name" content="Kunal Goenka" />
+    <meta property="og:title" content={fullTitle} />
+    <meta property="og:description" content={description} />
+    <meta property="og:url" content={canonical} />
+    <meta property="og:image" content={ogImage} />
+    <meta property="og:image:width" content="1200" />
+    <meta property="og:image:height" content="630" />
+    <meta property="og:image:alt" content="Kunal Goenka. I build software at the intersection of AI systems, design, and how people think." />
+    <meta name="twitter:card" content="summary_large_image" />
+
+    <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
+    <link rel="apple-touch-icon" href="/apple-touch-icon.png" />
+    <link rel="manifest" href="/site.webmanifest" />
+    <meta name="apple-mobile-web-app-title" content="Kunal Goenka" />
+    <meta name="apple-mobile-web-app-status-bar-style" content="default" />
+    <link rel="sitemap" href="/sitemap.xml" />
+
+
+    <script type="application/ld+json" set:html={JSON.stringify([person, ...schema])} />
+  </head>
+  <body>
+    <a class="skip-link" href="#main">Skip to content</a>
+    <Header path={path} />
+    <main id="main">
+      <slot />
+    </main>
+    <Contact />
+    <RoleFit />
+    <script is:inline>
+      // iOS Safari only applies :active (the press-down feedback on buttons)
+      // when a touch listener exists. A passive no-op listener costs nothing.
+      document.addEventListener("touchstart", () => {}, { passive: true });
+    </script>
+  </body>
+</html>

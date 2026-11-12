@@ -1,8 +1,9 @@
-name: build
+name: ci
 
-# CI only: verifies that every push / PR to main installs from the lockfile,
-# type-checks and builds. Deployment is handled by Vercel's GitHub
-# integration (see vercel.json), so there is no deploy step here.
+# Verifies every push and pull request: install from the lockfile, lint,
+# type-check and build, unit tests (including the factual-accuracy guards),
+# then browser tests against the built site. Deployment is handled by
+# Cloudflare's Git integration (pnpm run build, then npx wrangler deploy).
 
 on:
   push:
@@ -14,27 +15,26 @@ permissions:
   contents: read
 
 jobs:
-  build:
+  verify:
     runs-on: ubuntu-latest
-
-    env:
-      NODE_VERSION: 20
-
     steps:
       - uses: actions/checkout@v4
 
       # Version comes from the "packageManager" field in package.json.
-      - name: Install pnpm
-        uses: pnpm/action-setup@v4
+      - uses: pnpm/action-setup@v4
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
+      - uses: actions/setup-node@v4
         with:
-          node-version: ${{ env.NODE_VERSION }}
+          node-version-file: .node-version
           cache: pnpm
 
-      - name: Install dependencies
-        run: pnpm install --frozen-lockfile
+      - run: pnpm install --frozen-lockfile
+      - run: pnpm lint
+      - run: pnpm build
+      - run: pnpm test
 
-      - name: Type-check and build
-        run: pnpm build
+      - name: Install Playwright browser
+        run: pnpm exec playwright install --with-deps chromium
+
+      - name: Browser tests
+        run: pnpm test:e2e

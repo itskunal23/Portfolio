@@ -1,0 +1,57 @@
+---
+import Base from "~/layouts/Base.astro";
+import ProjectList from "~/components/ProjectList.astro";
+import { projects } from "~/data/projects";
+
+const groups = [
+  { title: "Boeing, Enterprise AI & Data", match: (t: string, o: string) => o === "Boeing" && t === "Enterprise AI & Data" },
+  { title: "Boeing, ELORA", match: (t: string, o: string) => o === "Boeing" && t === "ELORA" },
+  { title: "Virginia Tech Tech Fellows", match: (_t: string, o: string) => o === "Virginia Tech Tech Fellows" }
+].map((g) => ({ ...g, items: projects.filter((p) => g.match(p.team, p.org)) }));
+---
+
+<Base
+  path="/work/"
+  title="Work"
+  description="Case studies by Kunal Goenka: agentic RAG on MCP tool servers, NCR entity resolution, multilingual NLP, document ingestion, and an Azure Government Cloud recruiting platform."
+>
+  <div class="wrap page-head">
+    <h1>Work</h1>
+    <p>
+      {projects.length} projects, most from Boeing's Enterprise AI & Data and ELORA teams. Each one has an interactive diagram of how it
+      works. Professional work is described in general terms, with no proprietary detail.
+    </p>
+  </div>
+  {
+    groups.map((g) => (
+      <section class="wrap group" aria-labelledby={`g-${g.title.replace(/\W+/g, "-")}`}>
+        <h2 id={`g-${g.title.replace(/\W+/g, "-")}`}>{g.title}</h2>
+        <ProjectList projects={g.items} />
+      </section>
+    ))
+  }
+</Base>
+
+<style>
+  .page-head {
+    padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(2rem, 1rem + 2vw, 3rem);
+  }
+  .page-head h1 {
+    font-size: var(--step-5);
+    letter-spacing: -0.045em;
+  }
+  .page-head p {
+    margin-top: 1.25rem;
+    max-width: 48ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+  .group {
+    margin-top: clamp(2rem, 1rem + 3vw, 4rem);
+  }
+  .group h2 {
+    font-size: var(--step-1);
+    margin-bottom: 1rem;
+  }
+</style>

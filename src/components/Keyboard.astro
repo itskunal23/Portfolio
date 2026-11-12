@@ -1,0 +1,400 @@
+---
+// The MacBook Pro keyboard on the laptop's deck, in Apple's current layout:
+// full-height function row with Touch ID, Mac modifiers (fn/globe, control,
+// option, command), and inverted-T arrows with half-height keys.
+//
+// It mirrors typing in the hero terminal (each key presses as you type), and
+// clicking keys types into the terminal. Touch ID runs `whoami`, F1 runs
+// `help`, esc clears the line. It's a visual echo of a real, labelled text
+// field, so it is hidden from assistive tech and never takes focus.
+
+interface Key {
+  code: string;
+  /** Main legend. */
+  label?: string;
+  /** Upper legend: the shifted character, or a modifier's symbol. */
+  top?: string;
+  /** Width in keyboard units (1u = one letter key). */
+  w?: number;
+  /** Character typed when clicked. */
+  ch?: string;
+  kind?: "mod" | "fn" | "touch";
+  /** Legend hugs the right edge (right-hand keys, like a Mac). */
+  right?: boolean;
+  globe?: boolean;
+}
+
+const letters = (s: string): Key[] => [...s].map((c) => ({ code: `Key${c}`, label: c, ch: c.toLowerCase() }));
+const pairs = (list: [string, string, string][]): Key[] => list.map(([code, top, label]) => ({ code, top, label, ch: label }));
+
+const rows: Key[][] = [
+  [
+    { code: "Escape", label: "esc", w: 1.5, kind: "fn" },
+    ...Array.from({ length: 12 }, (_, i) => ({ code: `F${i + 1}`, label: `F${i + 1}`, kind: "fn" as const })),
+    { code: "TouchID", w: 1.5, kind: "touch" }
+  ],
+  [
+    ...pairs([
+      ["Backquote", "~", "`"],
+      ["Digit1", "!", "1"],
+      ["Digit2", "@", "2"],
+      ["Digit3", "#", "3"],
+      ["Digit4", "$", "4"],
+      ["Digit5", "%", "5"],
+      ["Digit6", "^", "6"],
+      ["Digit7", "&", "7"],
+      ["Digit8", "*", "8"],
+      ["Digit9", "(", "9"],
+      ["Digit0", ")", "0"],
+      ["Minus", "_", "-"],
+      ["Equal", "+", "="]
+    ]),
+    { code: "Backspace", label: "delete", w: 2, kind: "mod", right: true }
+  ],
+  [
+    { code: "Tab", label: "tab", top: "⇥", w: 1.5, kind: "mod" },
+    ...letters("QWERTYUIOP"),
+    ...pairs([
+      ["BracketLeft", "{", "["],
+      ["BracketRight", "}", "]"]
+    ]),
+    { code: "Backslash", top: "|", label: "\\", ch: "\\", w: 1.5 }
+  ],
+  [
+    { code: "CapsLock", label: "caps lock", top: "⇪", w: 1.75, kind: "mod" },
+    ...letters("ASDFGHJKL"),
+    ...pairs([
+      ["Semicolon", ":", ";"],
+      ["Quote", '"', "'"]
+    ]),
+    { code: "Enter", label: "return", top: "↩", w: 2.25, kind: "mod", right: true }
+  ],
+  [
+    { code: "ShiftLeft", label: "shift", top: "⇧", w: 2.25, kind: "mod" },
+    ...letters("ZXCVBNM"),
+    ...pairs([
+      ["Comma", "<", ","],
+      ["Period", ">", "."],
+      ["Slash", "?", "/"]
+    ]),
+    { code: "ShiftRight", label: "shift", top: "⇧", w: 2.75, kind: "mod", right: true }
+  ],
+  [
+    { code: "Fn", label: "fn", kind: "mod", globe: true },
+    { code: "ControlLeft", label: "control", top: "⌃", kind: "mod" },
+    { code: "AltLeft", label: "option", top: "⌥", kind: "mod" },
+    { code: "MetaLeft", label: "command", top: "⌘", w: 1.25, kind: "mod" },
+    { code: "Space", w: 5.5, ch: " " },
+    { code: "MetaRight", label: "command", top: "⌘", w: 1.25, kind: "mod", right: true },
+    { code: "AltRight", label: "option", top: "⌥", kind: "mod", right: true }
+  ]
+];
+---
+
+<div class="kb" data-keyboard aria-hidden="true">
+  {
+    rows.map((row, r) => (
+      <div class="row">
+        {row.map((k) => (
+          <div
+            class:list={["key", k.kind, k.label && k.label.length > 1 && k.kind !== "fn" && "word", k.right && "right"]}
+            data-code={k.code}
+            data-ch={k.ch}
+            style={`--w:${k.w ?? 1}`}
+          >
+            <span class="cap">
+              {k.globe && (
+                <svg class="globe" viewBox="0 0 16 16" aria-hidden="true">
+                  <circle cx="8" cy="8" r="6.5" />
+                  <path d="M1.5 8h13M8 1.5c-2.2 2-2.2 11 0 13M8 1.5c2.2 2 2.2 11 0 13" />
+                </svg>
+              )}
+              {k.top && <span class="top">{k.top}</span>}
+              {k.label && <span class="label">{k.label}</span>}
+            </span>
+          </div>
+        ))}
+        {r === rows.length - 1 && (
+          <div class="arrows">
+            <div class="key half" data-code="ArrowLeft">
+              <span class="cap">◀</span>
+            </div>
+            <div class="stack">
+              <div class="key half" data-code="ArrowUp">
+                <span class="cap">▲</span>
+              </div>
+              <div class="key half" data-code="ArrowDown">
+                <span class="cap">▼</span>
+              </div>
+            </div>
+            <div class="key half" data-code="ArrowRight">
+              <span class="cap">▶</span>
+            </div>
+          </div>
+        )}
+      </div>
+    ))
+  }
+</div>
+
+<script>
+  const kb = document.querySelector<HTMLElement>("[data-keyboard]");
+  const input = document.querySelector<HTMLInputElement>("#lt-q");
+  if (kb && input) {
+    const keys = new Map<string, HTMLElement>();
+    for (const el of kb.querySelectorAll<HTMLElement>(".key")) keys.set(el.dataset.code!, el);
+    const byChar = new Map<string, HTMLElement>();
+    for (const el of keys.values()) if (el.dataset.ch) byChar.set(el.dataset.ch, el);
+
+    // Press: a class for as long as the key is held, or a short tap.
+    const timers = new WeakMap<HTMLElement, number>();
+    const tap = (el: HTMLElement | undefined, ms = 110) => {
+      if (!el) return;
+      el.classList.add("down");
+      clearTimeout(timers.get(el));
+      timers.set(el, window.setTimeout(() => el.classList.remove("down"), ms));
+    };
+
+    // Mirror real typing in the terminal field.
+    input.addEventListener("keydown", (e) => {
+      const el = keys.get(e.code);
+      if (!el) return;
+      clearTimeout(timers.get(el));
+      el.classList.add("down");
+    });
+    input.addEventListener("keyup", (e) => keys.get(e.code)?.classList.remove("down"));
+    input.addEventListener("blur", () => {
+      for (const el of keys.values()) el.classList.remove("down");
+    });
+
+    const run = (command: string) => {
+      input.value = command;
+      input.form?.requestSubmit();
+    };
+
+    // Click keys to type into the terminal.
+    kb.addEventListener("pointerdown", (e) => {
+      const el = (e.target as HTMLElement).closest<HTMLElement>(".key");
+      if (!el) return;
+      e.preventDefault();
+      tap(el, 140);
+      const code = el.dataset.code!;
+      if (code === "Enter") input.form?.requestSubmit();
+      else if (code === "Backspace") input.value = input.value.slice(0, -1);
+      else if (code === "Escape") input.value = "";
+      else if (code === "TouchID") run("whoami");
+      else if (code === "F1") run("help");
+      else if (el.dataset.ch && input.value.length < input.maxLength) input.value += el.dataset.ch;
+      input.focus({ preventScroll: true });
+    });
+
+    // While the display's code types itself, the keyboard plays along with
+    // the same characters. Only once on screen, and never with reduced motion.
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    let ghost = 0;
+    const playAlong = (text: string) => {
+      clearInterval(ghost);
+      if (reduced.matches) return;
+      const chars = [...text.toLowerCase()].filter((c) => byChar.has(c));
+      let i = 0;
+      ghost = window.setInterval(() => {
+        if (i >= chars.length || document.activeElement === input) return clearInterval(ghost);
+        tap(byChar.get(chars[i]!), 70);
+        i += 3;
+      }, 33);
+    };
+    const panelText = () => document.querySelector<HTMLElement>("[data-laptop] [role='tabpanel']:not([hidden])")?.textContent ?? "";
+    let seen = false;
+    new IntersectionObserver((entries) => {
+      if (entries[0]?.isIntersecting && !seen) {
+        seen = true;
+        playAlong(panelText());
+      }
+    }).observe(kb);
+    for (const t of document.querySelectorAll("[data-laptop] [role='tab']"))
+      t.addEventListener("click", () => requestAnimationFrame(() => playAlong(panelText())));
+  }
+</script>
+
+<style>
+  /* Sized from the deck's width (the deck is a size container). A row is
+     15 units plus 14 gaps of 0.1 unit: 16.4 units in all. */
+  .kb {
+    --u: calc(80cqi / 16.4);
+    --gap: calc(var(--u) * 0.1);
+    --wall: calc(var(--u) * 0.1);
+    display: grid;
+    gap: var(--gap);
+    user-select: none;
+    -webkit-user-select: none;
+  }
+
+  .row {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--gap);
+  }
+
+  /* Low-profile Mac keys: a black cap over a thin shadow wall. Pressing
+     moves only the cap, with a transform: compositor-only, no layout. */
+  .key {
+    --h: 1;
+    position: relative;
+    flex: none;
+    width: calc(var(--u) * var(--w, 1) + var(--gap) * (var(--w, 1) - 1));
+    height: calc(var(--u) * var(--h) + var(--wall));
+    border-radius: calc(var(--u) * 0.14);
+    background: #050506;
+    cursor: pointer;
+    transition: box-shadow 160ms ease;
+  }
+
+  .cap {
+    position: absolute;
+    inset: 0 0 var(--wall);
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    align-items: center;
+    padding: calc(var(--u) * 0.1) calc(var(--u) * 0.12);
+    border-radius: calc(var(--u) * 0.13);
+    background: linear-gradient(180deg, #1d1d20, #151517);
+    box-shadow:
+      inset 0 0 0 0.5px rgb(255 255 255 / 0.06),
+      inset 0 1px 0 rgb(255 255 255 / 0.07);
+    color: #e8e8ed;
+    font: 400 calc(var(--u) * 0.3) / 1 system-ui, sans-serif;
+    letter-spacing: 0;
+    transition: transform 70ms cubic-bezier(0.3, 0.7, 0.4, 1), background-color 160ms ease;
+  }
+
+  /* Letters: one centred legend. Shifted pairs: stacked. */
+  .key:not(.word):not(:has(.top)) .cap {
+    justify-content: center;
+  }
+
+  .top {
+    font-size: 0.8em;
+    color: #a1a1a6;
+  }
+
+  /* Modifiers: symbol in one top corner, word along the bottom edge. */
+  .word .cap {
+    align-items: flex-start;
+    font-size: calc(var(--u) * 0.19);
+  }
+
+  .word .top {
+    align-self: flex-end;
+    font-size: 1.35em;
+    color: #e8e8ed;
+  }
+
+  .word.right .cap {
+    align-items: flex-end;
+  }
+
+  .word.right .top {
+    align-self: flex-start;
+  }
+
+  .word:not(:has(.top)):not(:has(.globe)) .cap {
+    justify-content: flex-end;
+  }
+
+  .globe {
+    align-self: flex-end;
+    width: 1.3em;
+    height: 1.3em;
+    fill: none;
+    stroke: currentColor;
+    stroke-width: 1.1;
+  }
+
+  .fn .cap {
+    justify-content: center;
+    font-size: calc(var(--u) * 0.2);
+    color: #a1a1a6;
+  }
+
+  /* Touch ID: a plain key with a ring. */
+  .touch .cap::after {
+    content: "";
+    margin: auto;
+    width: calc(var(--u) * 0.42);
+    height: calc(var(--u) * 0.42);
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 1.5px #6e6e73;
+  }
+
+  /* Inverted-T arrows: left and right are half height, up and down stack. */
+  .arrows {
+    display: flex;
+    align-items: flex-end;
+    gap: var(--gap);
+  }
+
+  .stack {
+    display: grid;
+    gap: var(--gap);
+  }
+
+  .half {
+    height: calc((var(--u) + var(--wall) - var(--gap)) / 2);
+  }
+
+  .half .cap {
+    justify-content: center;
+    padding: 0;
+    font-size: calc(var(--u) * 0.18);
+    color: #a1a1a6;
+  }
+
+  .key.down .cap,
+  .key:active .cap {
+    transform: translateY(calc(var(--wall) * 0.8));
+    background: #232327;
+    transition-duration: 30ms;
+  }
+
+  /* A soft blue underglow while a key is down. */
+  .key.down {
+    box-shadow: 0 0 calc(var(--u) * 0.4) calc(var(--u) * -0.06) rgb(41 151 255 / 0.6);
+  }
+
+  @media (hover: hover) {
+    .key:hover .cap {
+      background: linear-gradient(180deg, #242428, #1a1a1d);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .cap,
+    .key {
+      transition: none;
+    }
+  }
+
+  /* Phone size: keep symbols and letters, drop the small words. */
+  @media (max-width: 640px) {
+    .cap {
+      padding: calc(var(--u) * 0.06);
+      font-size: calc(var(--u) * 0.36);
+    }
+    .word .label,
+    .fn .label,
+    .key:not(.word) .top {
+      display: none;
+    }
+    .word .cap,
+    .key:not(.word):has(.top) .cap {
+      justify-content: center;
+      align-items: center;
+    }
+    .word .top,
+    .globe {
+      align-self: center;
+      font-size: calc(var(--u) * 0.36);
+    }
+  }
+</style>

@@ -1,0 +1,292 @@
+---
+interface Props {
+  path: string;
+}
+const { path } = Astro.props;
+
+const items = [
+  { href: "/work/", label: "Work" },
+  { href: "/experience/", label: "Experience" },
+  { href: "/about/", label: "About" },
+  { href: "/resume/", label: "Résumé" },
+  { href: "/#contact", label: "Contact" }
+];
+
+const isCurrent = (href: string) => !href.includes("#") && path.startsWith(href);
+---
+
+<header class="site-header">
+  <div class="wrap bar">
+    <a class="mark" href="/" aria-current={path === "/" ? "page" : undefined}>
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+        <circle cx="4" cy="12" r="3"></circle>
+        <circle cx="20" cy="5" r="3"></circle>
+        <circle cx="20" cy="19" r="3" class="h"></circle>
+        <path d="M7 12 C 12 12, 12 5, 17 5 M7 12 C 12 12, 12 19, 17 19"></path>
+      </svg>
+      <span>Kunal Goenka</span>
+    </a>
+    <nav aria-label="Primary">
+      <ul>
+        {
+          items.map((item) => (
+            <li>
+              <a href={item.href} aria-current={isCurrent(item.href) ? "page" : undefined}>
+                {item.label}
+              </a>
+            </li>
+          ))
+        }
+      </ul>
+    </nav>
+    <button class="fit-nav" type="button" data-fit-open aria-haspopup="dialog">Role-fit check</button>
+    <button class="mode" type="button" data-mode-toggle aria-pressed="false" title="Switch the copy to technical detail">
+      <span class="switch" aria-hidden="true"><span></span></span>
+      <span>Engineer mode</span>
+    </button>
+  </div>
+  <span class="scroll-progress" aria-hidden="true"></span>
+</header>
+
+<script>
+  // Engineer mode: technical copy and a darker palette. The choice is a
+  // per-visitor convenience, so it lives in localStorage (guarded).
+  const root = document.documentElement;
+  for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-mode-toggle]")) {
+    const sync = () => btn.setAttribute("aria-pressed", String(root.dataset.mode === "engineer"));
+    sync();
+    btn.addEventListener("click", () => {
+      const next = root.dataset.mode === "engineer" ? "plain" : "engineer";
+      root.dataset.mode = next;
+      try {
+        localStorage.setItem("mode", next);
+      } catch {
+        /* storage unavailable: the choice lasts for this page view */
+      }
+      sync();
+      window.dispatchEvent(new CustomEvent("modechange", { detail: next }));
+    });
+  }
+</script>
+
+<style>
+  .site-header {
+    position: sticky;
+    top: 0;
+    z-index: var(--z-sticky);
+    /* Clears the status bar when launched from the iPhone home screen. */
+    padding-top: env(safe-area-inset-top);
+    background: color-mix(in srgb, var(--bg) 68%, transparent);
+    border-bottom: 1px solid var(--glass-border);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+  }
+
+  /* Reading progress, driven by the scroll position in CSS: no JS, no
+     scroll listeners. Browsers without scroll timelines just don't show it. */
+  .scroll-progress {
+    display: none;
+  }
+
+  @supports (animation-timeline: scroll()) {
+    .scroll-progress {
+      display: block;
+      position: absolute;
+      left: 0;
+      right: 0;
+      bottom: -1px;
+      height: 2px;
+      background: var(--auto);
+      transform-origin: 0 50%;
+      transform: scaleX(0);
+      animation: read linear both;
+      animation-timeline: scroll(root);
+    }
+    @keyframes read {
+      to {
+        transform: scaleX(1);
+      }
+    }
+  }
+
+  /* Wide screens: the role-fit check lives in the sticky header. Narrower
+     screens use the floating button instead (see RoleFit.astro). */
+  .fit-nav {
+    display: none;
+    min-height: 44px;
+    padding: 0.35rem 1rem;
+    border: 1px solid var(--auto);
+    border-radius: 999px;
+    background: var(--auto);
+    color: var(--on-accent);
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 120ms var(--ease), filter 120ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .fit-nav:hover {
+      filter: brightness(1.08);
+    }
+  }
+
+  .fit-nav:active {
+    transform: scale(0.96);
+  }
+
+  @media (min-width: 1101px) {
+    .fit-nav {
+      display: inline-flex;
+      align-items: center;
+    }
+  }
+
+  .bar {
+    display: flex;
+    align-items: center;
+    gap: 1rem clamp(1rem, 3vw, 2.5rem);
+    min-height: 64px;
+  }
+
+  .mark {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    text-decoration: none;
+    margin-right: auto;
+  }
+
+  .glyph {
+    fill: var(--auto);
+    stroke: var(--auto);
+    stroke-width: 1.5;
+  }
+  .glyph path {
+    fill: none;
+  }
+  .glyph .h {
+    fill: var(--human-fill);
+    stroke: var(--human-fill);
+  }
+
+  nav ul {
+    display: flex;
+    gap: clamp(0.25rem, 1.2vw, 1rem);
+    list-style: none;
+  }
+
+  nav a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    padding-inline: 0.5rem;
+    color: var(--ink-2);
+    text-decoration: none;
+    font-weight: 500;
+  }
+
+  @media (hover: hover) {
+    nav a:hover {
+      color: var(--ink);
+    }
+  }
+
+  nav a[aria-current="page"] {
+    color: var(--ink);
+    text-decoration: underline;
+    text-decoration-thickness: 2px;
+    text-underline-offset: 0.45em;
+    text-decoration-color: var(--auto);
+  }
+
+  .mode {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.6rem;
+    min-height: 44px;
+    padding: 0.35rem 0.9rem 0.35rem 0.5rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-bg);
+    box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    .mode:hover {
+      border-color: var(--ink-2);
+    }
+  }
+
+  .switch {
+    position: relative;
+    width: 34px;
+    height: 20px;
+    border-radius: 999px;
+    background: var(--rule);
+    transition: background-color 200ms var(--ease);
+  }
+
+  .switch span {
+    position: absolute;
+    top: 3px;
+    left: 3px;
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--surface);
+    box-shadow: 0 1px 2px rgb(0 0 0 / 0.25);
+    transition: transform 220ms var(--ease);
+  }
+
+  .mode[aria-pressed="true"] .switch {
+    background: var(--human-fill);
+  }
+
+  .mode[aria-pressed="true"] .switch span {
+    transform: translateX(14px);
+  }
+
+  @media (max-width: 760px) {
+    .site-header {
+      position: static;
+    }
+    .bar {
+      flex-wrap: wrap;
+      gap: 0 0.5rem;
+      padding-block: 0.4rem;
+    }
+    nav {
+      order: 3;
+      width: 100%;
+      margin-inline: -0.5rem;
+    }
+    nav ul {
+      justify-content: space-between;
+      gap: 0;
+    }
+  }
+
+  @media (max-width: 420px) {
+    nav a {
+      padding-inline: 0.4rem;
+      font-size: 0.9375rem;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .switch,
+    .switch span {
+      transition: none;
+    }
+  }
+</style>

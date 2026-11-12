@@ -1,0 +1,208 @@
+---
+import Base from "~/layouts/Base.astro";
+import { experience, recognition } from "~/data/experience";
+import { projectBySlug } from "~/data/projects";
+---
+
+<Base
+  path="/experience/"
+  title="Experience"
+  description="Kunal Goenka's experience: Data Scientist at Boeing in Enterprise AI & Data and ELORA, Boeing Supplier Quality intern, and Virginia Tech Tech Fellows Technology Analyst."
+>
+  <div class="wrap page-head">
+    <h1>Experience</h1>
+    <p>Roles, dates, and responsibilities as they appear on my LinkedIn profile, with links to the case studies behind them.</p>
+  </div>
+
+  <div class="wrap timeline">
+    {
+      experience.map((emp) => (
+        <section class="employer" aria-label={`${emp.org}, ${emp.arrangement}`}>
+          <header class="emp-head">
+            <h2>{emp.org}</h2>
+            <p class="muted">{emp.arrangement}</p>
+          </header>
+          <ol class="roles group">
+            {emp.roles.map((r) => (
+              <li class="role">
+                <div class="when">
+                  <p>
+                    <time>{r.start}</time> to <time>{r.end}</time>
+                  </p>
+                  <p class="muted">{r.location}</p>
+                </div>
+                <div class="what">
+                  <h3>{r.title}</h3>
+                  {r.team && <p class="team">{r.team}</p>}
+                  <ul class="points">
+                    {r.points.map((pt) => (
+                      <li>{pt}</li>
+                    ))}
+                  </ul>
+                  {r.projects && (
+                    <div class="related">
+                      <p class="muted">Case studies</p>
+                      <ul>
+                        {r.projects.map((slug) => {
+                          const pr = projectBySlug(slug)!;
+                          return (
+                            <li>
+                              <a class="link" href={`/work/${slug}/`}>
+                                {pr.title}
+                              </a>
+                            </li>
+                          );
+                        })}
+                      </ul>
+                    </div>
+                  )}
+                </div>
+              </li>
+            ))}
+          </ol>
+        </section>
+      ))
+    }
+  </div>
+
+  <section class="wrap recognition" aria-labelledby="recognition">
+    <h2 id="recognition">Recognition</h2>
+    {
+      recognition.map((r) => (
+        <div class="award">
+          <h3>{r.title}</h3>
+          <p class="muted">{r.org}</p>
+          <p class="body">{r.body}</p>
+        </div>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .page-head {
+    padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(2rem, 1rem + 2vw, 3rem);
+  }
+  .page-head h1 {
+    font-size: var(--step-5);
+    letter-spacing: -0.045em;
+  }
+  .page-head p {
+    margin-top: 1.25rem;
+    max-width: 46ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
+    color: var(--ink-2);
+  }
+
+  .employer {
+    padding-block: clamp(2rem, 1.5rem + 2vw, 3.5rem);
+    border-top: 1px solid var(--rule);
+  }
+
+  .emp-head {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 1.25rem;
+    margin-bottom: 2rem;
+  }
+
+  .emp-head h2 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+  }
+
+  .roles > li {
+    padding-block: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+  }
+
+  .role {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    gap: 0.75rem clamp(1.5rem, 1rem + 3vw, 4rem);
+  }
+
+  .when {
+    font-variant-numeric: tabular-nums;
+  }
+
+  .when p:first-child {
+    font-weight: 500;
+  }
+
+  .what h3 {
+    font-size: var(--step-3);
+    letter-spacing: -0.025em;
+  }
+
+  .team {
+    margin-top: 0.3rem;
+    font-size: var(--step-1);
+    color: var(--ink-2);
+  }
+
+  .points {
+    margin-top: 1.25rem;
+    padding-left: 1.1em;
+    max-width: var(--measure);
+    font-family: var(--font-serif);
+    font-size: 1.1875rem;
+    line-height: 1.58;
+  }
+
+  .points li + li {
+    margin-top: 0.7em;
+  }
+
+  .points li::marker {
+    color: var(--auto);
+  }
+
+  .related {
+    margin-top: 1.5rem;
+  }
+
+  .related p {
+    font-size: var(--step--1);
+  }
+
+  .related ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    list-style: none;
+  }
+
+  .related a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+  }
+
+  .recognition {
+    padding-block: clamp(2rem, 1.5rem + 2vw, 3.5rem) 0;
+    border-top: 1px solid var(--rule);
+  }
+
+  .recognition > h2 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+    margin-bottom: 1.5rem;
+  }
+
+  .award h3 {
+    font-size: var(--step-2);
+  }
+
+  .award .body {
+    margin-top: 0.6rem;
+    max-width: 56ch;
+  }
+
+  @media (max-width: 760px) {
+    .role {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

@@ -1,0 +1,299 @@
+---
+import Base from "~/layouts/Base.astro";
+import Graph from "~/components/Graph.astro";
+import { projects } from "~/data/projects";
+import type { Project } from "~/data/types";
+
+export function getStaticPaths() {
+  return projects.map((p, i) => ({
+    params: { slug: p.slug },
+    props: { project: p, next: projects[(i + 1) % projects.length]! }
+  }));
+}
+
+interface Props {
+  project: Project;
+  next: Project;
+}
+const { project: p, next } = Astro.props;
+const path = `/work/${p.slug}/`;
+
+const schema = [
+  {
+    "@context": "https://schema.org",
+    "@type": "CreativeWork",
+    name: p.title,
+    description: p.summary,
+    url: new URL(path, Astro.site).toString(),
+    author: { "@id": new URL("/#person", Astro.site).toString() },
+    keywords: p.stack.join(", ")
+  },
+  {
+    "@context": "https://schema.org",
+    "@type": "BreadcrumbList",
+    itemListElement: [
+      { "@type": "ListItem", position: 1, name: "Work", item: new URL("/work/", Astro.site).toString() },
+      { "@type": "ListItem", position: 2, name: p.title, item: new URL(path, Astro.site).toString() }
+    ]
+  }
+];
+---
+
+<Base path={path} title={p.title} description={p.summary} schema={schema}>
+  <article>
+    <header class="wrap head">
+      <a class="back" href="/work/">Work</a>
+      <h1>{p.title}</h1>
+      <p class="summary tone-swap">
+        <span class="tone-plain">{p.plain}</span>
+        <span class="tone-engineer">{p.summary}</span>
+      </p>
+      <dl class="facts">
+        <div><dt>Organization</dt><dd>{p.org}</dd></div>
+        <div><dt>Team</dt><dd>{p.team}</dd></div>
+        <div><dt>Year</dt><dd>{p.period}</dd></div>
+        <div><dt>My role</dt><dd>{p.role}</dd></div>
+      </dl>
+    </header>
+
+    <section class="diagram" aria-labelledby="architecture">
+      <div class="wrap">
+        <h2 id="architecture" class="visually-hidden">Architecture</h2>
+        <Graph graph={p.graph} id={`graph-${p.slug}`} label={`Architecture of ${p.title}`} />
+      </div>
+    </section>
+
+    {
+      p.outcome.metrics.length > 0 && (
+        <section class="wrap outcome" aria-labelledby="key-numbers">
+          <h2 id="key-numbers" class="visually-hidden">Key numbers</h2>
+          <ul class="metrics">
+            {p.outcome.metrics.map((m) => (
+              <li>
+                <span class="value">{m.value}</span>
+                <span class="label">{m.label}</span>
+              </li>
+            ))}
+          </ul>
+        </section>
+      )
+    }
+
+    <div class="wrap body">
+      <section aria-labelledby="problem">
+        <h2 id="problem">Problem</h2>
+        <div class="prose"><p>{p.problem}</p></div>
+      </section>
+      <section aria-labelledby="context">
+        <h2 id="context">Why it mattered</h2>
+        <div class="prose"><p>{p.context}</p></div>
+      </section>
+      <section aria-labelledby="approach">
+        <h2 id="approach">Approach</h2>
+        <div class="prose">{p.approach.map((a) => <p>{a}</p>)}</div>
+      </section>
+      <section aria-labelledby="contribution">
+        <h2 id="contribution">My contribution</h2>
+        <div class="prose">
+          <ul>{p.contribution.map((c) => <li>{c}</li>)}</ul>
+        </div>
+      </section>
+      {
+        p.decisions.length > 0 && (
+          <section aria-labelledby="decisions">
+            <h2 id="decisions">Decisions</h2>
+            <div class="decisions">
+              {p.decisions.map((d) => (
+                <div>
+                  <h3>{d.title}</h3>
+                  <p class="prose">{d.body}</p>
+                </div>
+              ))}
+            </div>
+          </section>
+        )
+      }
+      <section aria-labelledby="result">
+        <h2 id="result">Outcome</h2>
+        <div class="prose"><p>{p.outcome.text}</p></div>
+      </section>
+      <section aria-labelledby="stack">
+        <h2 id="stack">Technologies</h2>
+        <ul class="tags">{p.stack.map((s) => <li>{s}</li>)}</ul>
+      </section>
+      <section aria-labelledby="scope">
+        <h2 id="scope">A note on scope</h2>
+        <p class="scope">{p.scope}</p>
+      </section>
+    </div>
+
+    <nav class="wrap next" aria-label="Next project">
+      <a href={`/work/${next.slug}/`}>
+        <span class="muted">Next project</span>
+        <span class="next-title">{next.title}</span>
+      </a>
+    </nav>
+  </article>
+</Base>
+
+<style>
+  .head {
+    padding-block: clamp(2rem, 1rem + 3vw, 4.5rem) clamp(2rem, 1rem + 2vw, 3rem);
+  }
+
+  .back {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    color: var(--ink-2);
+    font-weight: 500;
+  }
+
+  .back::before {
+    content: "";
+    width: 7px;
+    height: 7px;
+    margin-right: 0.6rem;
+    border-left: 1.5px solid currentColor;
+    border-bottom: 1.5px solid currentColor;
+    transform: rotate(45deg);
+  }
+
+  h1 {
+    margin-top: 1rem;
+    font-size: var(--step-5);
+    letter-spacing: -0.045em;
+    max-width: 18ch;
+  }
+
+  .summary {
+    margin-top: 1.25rem;
+    max-width: 44ch;
+    font-size: var(--step-2);
+    line-height: 1.35;
+    letter-spacing: -0.01em;
+  }
+
+  .facts {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1rem clamp(1.5rem, 1rem + 2vw, 3.5rem);
+    margin: 2.25rem 0 0;
+  }
+
+  .facts dt {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .facts dd {
+    margin: 0.15rem 0 0;
+    font-weight: 500;
+  }
+
+  .diagram {
+    padding-block: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+    background: var(--surface);
+    border-block: 1px solid var(--rule);
+  }
+
+  .outcome {
+    padding-top: clamp(2.5rem, 1.5rem + 3vw, 4.5rem);
+  }
+
+  .metrics {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 1.5rem clamp(2rem, 1rem + 4vw, 5rem);
+    list-style: none;
+  }
+
+  .metrics li {
+    display: grid;
+    gap: 0.2rem;
+  }
+
+  .metrics .value {
+    font-size: var(--step-4);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .metrics .label {
+    color: var(--ink-2);
+    max-width: 18rem;
+  }
+
+  .body {
+    display: grid;
+    gap: clamp(2.5rem, 2rem + 2vw, 4rem);
+    padding-block: clamp(3rem, 2rem + 3vw, 5rem);
+  }
+
+  .body section {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    gap: 0.75rem clamp(1.5rem, 1rem + 3vw, 4rem);
+  }
+
+  .body h2 {
+    font-size: var(--step-1);
+    padding-top: 0.25rem;
+  }
+
+  .prose ul {
+    padding-left: 1.1em;
+  }
+
+  .prose li + li {
+    margin-top: 0.5em;
+  }
+
+  .decisions {
+    display: grid;
+    gap: 1.75rem;
+    max-width: var(--measure);
+  }
+
+  .decisions h3 {
+    font-size: var(--step-1);
+  }
+
+  .decisions .prose {
+    margin-top: 0.35rem;
+  }
+
+  .scope {
+    max-width: 60ch;
+    color: var(--ink-2);
+  }
+
+  .next a {
+    display: grid;
+    gap: 0.35rem;
+    padding-block: 2.5rem;
+    border-top: 1px solid var(--rule);
+    text-decoration: none;
+  }
+
+  .next-title {
+    font-size: var(--step-4);
+    font-weight: 600;
+    letter-spacing: -0.035em;
+    line-height: 1.05;
+  }
+
+  @media (hover: hover) {
+    .next a:hover .next-title {
+      color: var(--auto);
+    }
+  }
+
+  @media (max-width: 760px) {
+    .body section {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

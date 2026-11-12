@@ -1,0 +1,524 @@
+---
+import type { Graph } from "~/data/types";
+
+interface Props {
+  graph: Graph;
+  id: string;
+  variant?: "hero" | "study";
+  /** Accessible name for the figure. */
+  label: string;
+  /** Hero only: play the first trace once when the graph scrolls into view. */
+  autoplay?: boolean;
+}
+
+const { graph, id, variant = "study", label, autoplay = false } = Astro.props;
+const byId = new Map(graph.nodes.map((n) => [n.id, n]));
+
+type Pt = { x: number; y: number };
+const center = (c: number, r: number, vertical: boolean): Pt =>
+  vertical ? { x: r - 0.5, y: c - 0.5 } : { x: c - 0.5, y: r - 0.5 };
+
+function edgePath(from: string, to: string, vertical: boolean) {
+  const a = byId.get(from)!;
+  const b = byId.get(to)!;
+  const p = center(a.col, a.row, vertical);
+  const q = center(b.col, b.row, vertical);
+  const f = (n: number) => +n.toFixed(3);
+  if (p.x === q.x || p.y === q.y) return `M${f(p.x)} ${f(p.y)} L${f(q.x)} ${f(q.y)}`;
+  if (vertical) {
+    const my = (p.y + q.y) / 2;
+    return `M${f(p.x)} ${f(p.y)} C${f(p.x)} ${f(my)} ${f(q.x)} ${f(my)} ${f(q.x)} ${f(q.y)}`;
+  }
+  const mx = (p.x + q.x) / 2;
+  return `M${f(p.x)} ${f(p.y)} C${f(mx)} ${f(p.y)} ${f(mx)} ${f(q.y)} ${f(q.x)} ${f(q.y)}`;
+}
+
+const kindName: Record<string, string> = {
+  source: "Input",
+  gate: "Check",
+  human: "A person decides",
+  output: "Result"
+};
+
+const first = graph.nodes[0]!;
+---
+
+<figure
+  class:list={["graph", variant]}
+  id={id}
+  data-graph
+  data-autoplay={autoplay ? "" : undefined}
+  data-traces={JSON.stringify(graph.traces)}
+  aria-label={label}
+  style={`--cols:${graph.cols};--rows:${graph.rows}`}
+>
+  <div class="stage">
+    <div class="floor" aria-hidden="true"></div>
+    {
+      [false, true].map((vertical) => (
+        <svg
+          class:list={["edges", vertical ? "v" : "h"]}
+          viewBox={vertical ? `0 0 ${graph.rows} ${graph.cols}` : `0 0 ${graph.cols} ${graph.rows}`}
+          preserveAspectRatio="none"
+          aria-hidden="true"
+        >
+          {graph.edges.map((e) => {
+            const d = edgePath(e.from, e.to, vertical);
+            return (
+              <g data-edge={`${e.from}>${e.to}`} class:list={["edge", e.kind === "human" && "human"]}>
+                <path class="base" d={d} vector-effect="non-scaling-stroke" />
+                <path class="lit" d={d} vector-effect="non-scaling-stroke" />
+              </g>
+            );
+          })}
+        </svg>
+      ))
+    }
+    <ol class="nodes" aria-label="Steps">
+      {
+        graph.nodes.map((n) => (
+          <li style={`--c:${n.col};--r:${n.row}`}>
+            <button
+              type="button"
+              class:list={["node", n.kind ?? "step"]}
+              data-node={n.id}
+              aria-pressed={n.id === first.id ? "true" : "false"}
+              aria-controls={`${id}-detail`}
+            >
+              {n.kind === "gate" && <span class="gate-mark" aria-hidden="true" />}
+              <span>{n.label}</span>
+              {n.kind && kindName[n.kind] && <span class="visually-hidden">. {kindName[n.kind]}</span>}
+            </button>
+          </li>
+        ))
+      }
+    </ol>
+  </div>
+
+  <div class="below">
+    <div class="detail" id={`${id}-detail`} aria-live="polite">
+      {
+        graph.nodes.map((n) => (
+          <div class="step" data-step={n.id} hidden={n.id !== first.id}>
+            <p class="step-title">
+              {n.label}
+              {n.kind && kindName[n.kind] && <span class:list={["kind", n.kind]}>{kindName[n.kind]}</span>}
+            </p>
+            <p class="step-body">{n.detail}</p>
+          </div>
+        ))
+      }
+    </div>
+    <div class="controls">
+      <button type="button" class="button quiet trace-btn" data-trace>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
+        <span>Trace a request</span>
+      </button>
+      <p class="trace-label" data-trace-label aria-live="polite"></p>
+    </div>
+  </div>
+  <figcaption>{graph.caption}</figcaption>
+</figure>
+
+<script>
+  const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+  type Trace = { label: string; path: string[] };
+
+  for (const fig of document.querySelectorAll<HTMLElement>("[data-graph]")) {
+    const traces: Trace[] = JSON.parse(fig.dataset.traces || "[]");
+    const nodes = [...fig.querySelectorAll<HTMLButtonElement>("[data-node]")];
+    const steps = [...fig.querySelectorAll<HTMLElement>("[data-step]")];
+    const traceBtn = fig.querySelector<HTMLButtonElement>("[data-trace]")!;
+    const traceLabel = fig.querySelector<HTMLElement>("[data-trace-label]")!;
+    let timers: number[] = [];
+    let next = 0;
+
+    const select = (id: string) => {
+      for (const n of nodes) n.setAttribute("aria-pressed", String(n.dataset.node === id));
+      for (const s of steps) s.hidden = s.dataset.step !== id;
+    };
+
+    const clear = () => {
+      timers.forEach(clearTimeout);
+      timers = [];
+      fig.querySelectorAll(".is-lit").forEach((el) => el.classList.remove("is-lit"));
+      fig.classList.remove("tracing");
+    };
+
+    const light = (path: string[], i: number) => {
+      fig.querySelector(`[data-node="${path[i]}"]`)?.classList.add("is-lit");
+      if (i > 0) {
+        fig.querySelectorAll(`[data-edge="${path[i - 1]}>${path[i]}"]`).forEach((e) => e.classList.add("is-lit"));
+      }
+    };
+
+    const run = (t: Trace) => {
+      clear();
+      fig.classList.add("tracing");
+      traceLabel.textContent = "";
+      const step = reduced.matches ? 0 : 340;
+      t.path.forEach((_, i) => {
+        if (step === 0) light(t.path, i);
+        else timers.push(window.setTimeout(() => light(t.path, i), i * step));
+      });
+      timers.push(
+        window.setTimeout(() => {
+          fig.classList.remove("tracing");
+          traceLabel.textContent = `Traced: ${t.label.toLowerCase()}`;
+          select(t.path[t.path.length - 1]!);
+        }, t.path.length * step)
+      );
+    };
+
+    for (const n of nodes) n.addEventListener("click", () => select(n.dataset.node!));
+
+    // Arrow keys move between steps in document order.
+    fig.querySelector(".nodes")!.addEventListener("keydown", (ev) => {
+      const e = ev as KeyboardEvent;
+      const i = nodes.indexOf(document.activeElement as HTMLButtonElement);
+      if (i < 0) return;
+      const delta = { ArrowRight: 1, ArrowDown: 1, ArrowLeft: -1, ArrowUp: -1 }[e.key];
+      if (!delta) return;
+      e.preventDefault();
+      const target = nodes[(i + delta + nodes.length) % nodes.length]!;
+      target.focus();
+      select(target.dataset.node!);
+    });
+
+    if (traces.length === 0) traceBtn.hidden = true;
+    traceBtn.addEventListener("click", () => {
+      run(traces[next % traces.length]!);
+      next++;
+    });
+
+    if (fig.hasAttribute("data-autoplay") && traces.length && !reduced.matches) {
+      const io = new IntersectionObserver(
+        (entries) => {
+          if (entries.some((en) => en.isIntersecting)) {
+            io.disconnect();
+            timers.push(window.setTimeout(() => {
+              run(traces[0]!);
+              next = 1;
+            }, 700));
+          }
+        },
+        { threshold: 0.25 }
+      );
+      io.observe(fig);
+    }
+  }
+</script>
+
+<style>
+  .graph {
+    container-type: inline-size;
+    margin: 0;
+    --row-h: 76px;
+    --node-font: 0.9375rem;
+  }
+
+  .stage {
+    position: relative;
+  }
+
+  .floor {
+    display: none;
+  }
+
+  .edges {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    overflow: visible;
+  }
+
+  .edges.v {
+    display: none;
+  }
+
+  .edge path {
+    fill: none;
+    stroke-width: 1.5;
+  }
+
+  .edge .base {
+    stroke: var(--rule);
+  }
+
+  .edge.human .base {
+    stroke: var(--human-fill);
+    stroke-dasharray: 5 5;
+    opacity: 0.8;
+  }
+
+  .edge .lit {
+    stroke: var(--auto);
+    stroke-width: 2.5;
+    opacity: 0;
+    transition: opacity 260ms var(--ease);
+  }
+
+  .edge.human .lit {
+    stroke: var(--human-fill);
+  }
+
+  .edge.is-lit .lit {
+    opacity: 1;
+  }
+
+  .nodes {
+    position: relative;
+    display: grid;
+    grid-template-columns: repeat(var(--cols), minmax(0, 1fr));
+    grid-template-rows: repeat(var(--rows), var(--row-h));
+    list-style: none;
+  }
+
+  .nodes li {
+    grid-column: var(--c);
+    grid-row: var(--r);
+    display: grid;
+    place-items: center;
+    min-width: 0;
+    padding-inline: 4px;
+  }
+
+  .node {
+    position: relative;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    gap: 0.4rem;
+    max-width: 100%;
+    min-height: 44px;
+    padding: 0.45rem 0.8rem;
+    border: 1px solid var(--rule);
+    border-radius: var(--radius-s);
+    background: var(--surface);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--node-font);
+    font-weight: 500;
+    line-height: 1.15;
+    text-align: center;
+    cursor: pointer;
+    box-shadow: 0 1px 0 rgb(var(--shadow) / 0.06);
+    transition:
+      border-color 180ms var(--ease),
+      background-color 180ms var(--ease),
+      transform 260ms var(--ease),
+      box-shadow 260ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .node:hover {
+      border-color: var(--ink-2);
+    }
+  }
+
+  .node.source {
+    background: var(--bg);
+    border-style: dashed;
+  }
+
+  .node.output {
+    background: var(--ink);
+    border-color: var(--ink);
+    color: var(--bg);
+  }
+
+  .node.human {
+    background: var(--human-soft);
+    border-color: var(--human-fill);
+  }
+
+  .gate-mark {
+    width: 8px;
+    height: 8px;
+    flex: none;
+    transform: rotate(45deg);
+    border: 1.5px solid var(--auto);
+  }
+
+  .node[aria-pressed="true"] {
+    outline: 2px solid var(--auto);
+    outline-offset: 2px;
+  }
+
+  .node.is-lit {
+    border-color: var(--auto);
+    background: var(--auto-soft);
+    color: var(--ink);
+  }
+
+  .node.human.is-lit {
+    border-color: var(--human-fill);
+    background: var(--human-fill);
+    color: #1a1206;
+  }
+
+  .node.output.is-lit {
+    background: var(--auto);
+    border-color: var(--auto);
+    color: var(--on-accent);
+  }
+
+  .below {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: 1rem 2rem;
+    align-items: start;
+    margin-top: 1.5rem;
+    padding-top: 1.25rem;
+    border-top: 1px solid var(--rule);
+  }
+
+  .detail {
+    min-height: 4.75rem;
+  }
+
+  .step-title {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: baseline;
+    gap: 0.25rem 0.75rem;
+    font-weight: 600;
+    font-size: var(--step-1);
+  }
+
+  .kind {
+    font-size: var(--step--1);
+    font-weight: 500;
+    color: var(--ink-2);
+  }
+
+  .kind.human {
+    color: var(--human);
+  }
+
+  .step-body {
+    margin-top: 0.3rem;
+    max-width: 58ch;
+    color: var(--ink-2);
+  }
+
+  .controls {
+    display: grid;
+    justify-items: end;
+    gap: 0.4rem;
+  }
+
+  .trace-label {
+    min-height: 1.4em;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  figcaption {
+    margin-top: 1rem;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  /* Narrow containers: the graph turns 90 degrees and reads top to bottom. */
+  @container (max-width: 620px) {
+    .stage {
+      --row-h: 58px;
+      --node-font: 0.875rem;
+    }
+    .edges.h {
+      display: none;
+    }
+    .edges.v {
+      display: block;
+    }
+    .nodes {
+      grid-template-columns: repeat(var(--rows), minmax(0, 1fr));
+      grid-template-rows: repeat(var(--cols), var(--row-h));
+    }
+    .nodes li {
+      grid-column: var(--r);
+      grid-row: var(--c);
+    }
+    .node {
+      padding-inline: 0.55rem;
+    }
+    .below {
+      grid-template-columns: 1fr;
+    }
+    .controls {
+      justify-items: start;
+    }
+  }
+
+  /* ---- Hero variant: the same graph, set on a tilted plane in space. ---- */
+  .hero {
+    --row-h: 96px;
+    perspective: 1600px;
+  }
+
+  .hero .stage {
+    transform-style: preserve-3d;
+    transform: rotateX(calc(26deg + var(--tilt-x, 0deg))) rotateZ(-3deg) rotateY(var(--tilt-y, 0deg)) scale(0.92);
+    transform-origin: 50% 60%;
+  }
+
+  .hero .floor {
+    display: block;
+    position: absolute;
+    inset: -12% -4%;
+    border-radius: var(--radius-m);
+    background-color: var(--surface);
+    background-image: radial-gradient(circle at 1px 1px, var(--rule) 1px, transparent 0);
+    background-size: 22px 22px;
+    border: 1px solid var(--rule);
+    transform: translateZ(-1px);
+    box-shadow: 0 40px 80px -40px rgb(var(--shadow) / 0.35);
+  }
+
+  .hero .nodes,
+  .hero .nodes li {
+    transform-style: preserve-3d;
+  }
+
+  .hero .node {
+    transform: translateZ(18px);
+    box-shadow: 0 10px 18px -10px rgb(var(--shadow) / 0.45);
+  }
+
+  .hero .node.is-lit {
+    transform: translateZ(44px);
+    box-shadow: 0 26px 30px -18px rgb(var(--shadow) / 0.5);
+  }
+
+  @media (hover: hover) {
+    .hero .node:hover {
+      transform: translateZ(30px);
+    }
+  }
+
+  @container (max-width: 620px) {
+    .hero .stage {
+      --row-h: 62px;
+    }
+    .hero .stage {
+      transform: rotateX(18deg) rotateZ(0deg);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .node,
+    .edge .lit {
+      transition: none;
+    }
+    .hero .stage {
+      transform: none;
+    }
+    .hero .node,
+    .hero .node.is-lit,
+    .hero .node:hover {
+      transform: none;
+    }
+  }
+</style>

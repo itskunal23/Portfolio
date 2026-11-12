@@ -1,0 +1,117 @@
+---
+import Base from "~/layouts/Base.astro";
+import Hero from "~/components/Hero.astro";
+import ProofStrip from "~/components/ProofStrip.astro";
+import ProjectList from "~/components/ProjectList.astro";
+import CareerTable from "~/components/CareerTable.astro";
+import Playground from "~/components/Playground.astro";
+import { projects } from "~/data/projects";
+import { education } from "~/data/education";
+
+const featured = projects.filter((p) => p.featured);
+const gt = education[0];
+---
+
+<Base path="/">
+  <div class="mesh">
+    <Hero />
+    <ProofStrip />
+  </div>
+
+  <section id="work" class="section work" aria-labelledby="work-title">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="work-title">Selected work</h2>
+        <p>Enterprise AI systems I've built at Boeing. Each case study covers the problem, the architecture, and what changed.</p>
+      </div>
+      <ProjectList projects={featured} />
+      <p class="more"><a class="link" href="/work/">All {projects.length} projects</a></p>
+    </div>
+  </section>
+
+  <Playground />
+
+  <section class="section career" aria-labelledby="career-title">
+    <div class="wrap">
+      <div class="section-head row">
+        <h2 id="career-title">Experience</h2>
+        <a class="button quiet" href="/experience/">Full experience</a>
+      </div>
+      <CareerTable />
+    </div>
+  </section>
+
+  <section class="section study band" aria-labelledby="study-title">
+    <div class="wrap study-grid">
+      <div>
+        <p class="status">{gt.status}, {gt.start} to {gt.end}</p>
+        <h2 id="study-title">Georgia Tech</h2>
+        <p class="degree">{gt.degree}, specializing in Artificial Intelligence</p>
+      </div>
+      <div class="prose">
+        {gt.notes.map((n) => <p>{n}</p>)}
+        <p><a class="link" href="/about/#education">Education</a></p>
+      </div>
+    </div>
+  </section>
+</Base>
+
+<style>
+  /* Apple-style tiles: the work sits in a white card on a grey band. */
+  .work {
+    --list-bg: var(--surface);
+    background: var(--sunken);
+  }
+
+  .more {
+    margin-top: 1.75rem;
+  }
+
+  .more .link,
+  .prose .link {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+
+  .career {
+    padding-top: clamp(2rem, 1rem + 3vw, 4rem);
+  }
+
+  .more {
+    text-align: center;
+  }
+
+  .study {
+    background: var(--sunken);
+  }
+
+  .study-grid {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: clamp(2rem, 1rem + 4vw, 6rem);
+  }
+
+  .status {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+  }
+
+  .study h2 {
+    margin-top: 0.5rem;
+    font-size: var(--step-5);
+    letter-spacing: -0.04em;
+  }
+
+  .degree {
+    margin-top: 1rem;
+    font-size: var(--step-1);
+    max-width: 24ch;
+  }
+
+  @media (max-width: 860px) {
+    .study-grid {
+      grid-template-columns: 1fr;
+    }
+  }
+</style>

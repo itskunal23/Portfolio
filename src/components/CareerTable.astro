@@ -1,0 +1,117 @@
+---
+import { experience } from "~/data/experience";
+
+const rows = experience.flatMap((e) => e.roles.map((r) => ({ ...r, org: e.org })));
+---
+
+<div class="career">
+  <div class="head" aria-hidden="true">
+    <span>Period and organization</span>
+    <span>Focus</span>
+    <span>Impact</span>
+  </div>
+  <ol class="group">
+    {
+      rows.map((r) => (
+        <li>
+          <div class="who">
+            <p class="when">
+              <time>{r.start}</time> to <time>{r.end}</time>
+            </p>
+            <p class="org">{r.org}</p>
+            <p class="muted">{r.team ? `${r.title}, ${r.team.replace(/ \(.*\)$/, "")}` : r.title}</p>
+          </div>
+          <p class="focus tone-swap">
+            <span class="visually-hidden">Focus: </span>
+            <span class="tone-plain">{r.focus.plain}</span>
+            <span class="tone-engineer">{r.focus.engineer}</span>
+          </p>
+          <ul class="impact" aria-label="Impact">
+            {r.impact.map((i) => (
+              <li>{i}</li>
+            ))}
+          </ul>
+        </li>
+      ))
+    }
+  </ol>
+</div>
+
+<style>
+  .head,
+  ol > li {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 5fr) minmax(0, 4fr);
+    gap: 1rem clamp(1.5rem, 1rem + 2vw, 3rem);
+  }
+
+  .head {
+    padding: 0 var(--row-pad, 1.25rem) 0.75rem;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .head span:last-child {
+    text-align: right;
+  }
+
+  .career {
+    --row-pad: clamp(1.1rem, 0.9rem + 0.8vw, 1.6rem);
+  }
+
+  .when {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    font-variant-numeric: tabular-nums;
+  }
+
+  .org {
+    margin-top: 0.2rem;
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+  }
+
+  .who .muted {
+    margin-top: 0.15rem;
+    font-size: var(--step--1);
+  }
+
+  .focus {
+    font-size: var(--step-1);
+    line-height: 1.4;
+    padding-top: 1.35rem;
+  }
+
+  .impact {
+    display: grid;
+    gap: 0.4rem;
+    justify-items: end;
+    align-content: start;
+    padding-top: 1.35rem;
+    list-style: none;
+    text-align: right;
+  }
+
+  .impact li {
+    font-weight: 500;
+  }
+
+  @media (max-width: 860px) {
+    .head {
+      display: none;
+    }
+    ol > li {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    .focus,
+    .impact {
+      padding-top: 0;
+    }
+    .impact {
+      justify-items: start;
+      text-align: left;
+    }
+  }
+</style>

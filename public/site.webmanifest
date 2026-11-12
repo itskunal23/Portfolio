@@ -1,0 +1,14 @@
+{
+  "name": "Kunal Goenka",
+  "short_name": "Kunal Goenka",
+  "description": "Agentic AI engineer at Boeing: case studies, experience, and résumé.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#ffffff",
+  "theme_color": "#ffffff",
+  "icons": [
+    { "src": "/apple-touch-icon.png", "sizes": "180x180", "type": "image/png" },
+    { "src": "/favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

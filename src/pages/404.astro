@@ -1,0 +1,45 @@
+---
+import Base from "~/layouts/Base.astro";
+---
+
+<Base path="/404/" title="Page not found" noindex>
+  <div class="wrap nf">
+    <h1>This page doesn't exist</h1>
+    <p>The link may be old, or the address may have a typo. Everything on the site is reachable from these pages:</p>
+    <ul>
+      <li><a class="link" href="/">Home</a></li>
+      <li><a class="link" href="/work/">Work</a></li>
+      <li><a class="link" href="/experience/">Experience</a></li>
+      <li><a class="link" href="/about/">About</a></li>
+    </ul>
+  </div>
+</Base>
+
+<style>
+  .nf {
+    padding-block: clamp(4rem, 3rem + 6vw, 9rem);
+  }
+  h1 {
+    font-size: var(--step-5);
+    letter-spacing: -0.045em;
+    max-width: 14ch;
+  }
+  p {
+    margin-top: 1.25rem;
+    max-width: 46ch;
+    font-size: var(--step-1);
+    color: var(--ink-2);
+  }
+  ul {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0 1.5rem;
+    margin-top: 1.5rem;
+    list-style: none;
+  }
+  a {
+    display: inline-flex;
+    min-height: 44px;
+    align-items: center;
+  }
+</style>

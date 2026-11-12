@@ -1,0 +1,240 @@
+---
+import Glyph from "./Glyph.astro";
+import type { Project } from "~/data/types";
+
+interface Props {
+  projects: Project[];
+  headingLevel?: "h3" | "h2";
+}
+const { projects, headingLevel = "h3" } = Astro.props;
+const H = headingLevel;
+---
+
+<ul class="project-list">
+  {
+    projects.map((p) => {
+      const plain = p.card?.plain;
+      const engineer = p.card?.engineer ?? plain;
+      return (
+        <li>
+          <a href={`/work/${p.slug}/`} class="row">
+            <div class="where">
+              <span>{p.org}</span>
+              <span class="muted">{p.team}</span>
+              <span class="muted">{p.period}</span>
+            </div>
+            <div class="what">
+              <H class="title">{p.title}</H>
+              <p class="summary tone-swap">
+                <span class="tone-plain">{p.plain}</span>
+                <span class="tone-engineer">{p.summary}</span>
+              </p>
+            </div>
+            <div class="mark">
+              {plain && engineer ? (
+                <p class="metric tone-swap">
+                  <span class="tone-plain">
+                    <span class="value">{plain.value}</span> <span class="label">{plain.label}</span>
+                  </span>
+                  <span class="tone-engineer">
+                    <span class="value">{engineer.value}</span> <span class="label">{engineer.label}</span>
+                  </span>
+                </p>
+              ) : null}
+              <Glyph graph={p.graph} />
+            </div>
+          </a>
+        </li>
+      );
+    })
+  }
+</ul>
+
+<script>
+  // Cursor spotlight: one CSS variable pair per row, written on pointer move
+  // (mouse only, rAF-throttled). The light itself is a CSS gradient.
+  if (window.matchMedia("(hover: hover) and (pointer: fine)").matches) {
+    for (const row of document.querySelectorAll<HTMLElement>(".project-list .row")) {
+      let raf = 0;
+      row.addEventListener("pointermove", (e) => {
+        if (raf) return;
+        raf = requestAnimationFrame(() => {
+          raf = 0;
+          const r = row.getBoundingClientRect();
+          row.style.setProperty("--mx", `${e.clientX - r.left}px`);
+          row.style.setProperty("--my", `${e.clientY - r.top}px`);
+        });
+      });
+    }
+  }
+</script>
+
+<style>
+  .project-list {
+    --pad: clamp(1.25rem, 0.5rem + 2.5vw, 2.75rem);
+    list-style: none;
+    overflow: hidden;
+    padding-inline: var(--pad);
+    border-radius: var(--radius-l);
+    /* Grey card on white pages; white card on grey bands (set by the band). */
+    background: var(--list-bg, var(--sunken));
+  }
+
+  .project-list li + li {
+    border-top: 1px solid var(--rule);
+  }
+
+  .row {
+    display: grid;
+    grid-template-columns: minmax(9rem, 2fr) minmax(0, 6fr) minmax(10rem, 3fr);
+    gap: 1.5rem 2.5rem;
+    padding-block: clamp(1.5rem, 1rem + 1.5vw, 2.25rem);
+    text-decoration: none;
+    color: inherit;
+  }
+
+  .row {
+    position: relative;
+    isolation: isolate;
+  }
+
+  @media (hover: hover) {
+    .row:hover {
+      color: inherit;
+    }
+  }
+
+  .row:focus-visible {
+    outline-offset: -4px;
+  }
+
+  /* The spotlight spans the full card width, behind the row's content. */
+  .row::before {
+    content: "";
+    position: absolute;
+    inset: 0 calc(-1 * var(--pad));
+    z-index: -1;
+    background: radial-gradient(420px circle at calc(var(--mx, 50%) + var(--pad)) var(--my, 50%), var(--auto-soft), transparent 70%);
+    opacity: 0;
+    transition: opacity 240ms var(--ease);
+    pointer-events: none;
+  }
+
+  @media (hover: hover) {
+    .row:hover::before {
+      opacity: 1;
+    }
+  }
+
+  .row :global(svg) {
+    transition: transform 320ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .row:hover :global(svg) {
+      transform: translateY(-3px) scale(1.04);
+    }
+  }
+
+  @media (hover: hover) {
+    .row:hover .title {
+      color: var(--auto);
+    }
+  }
+
+  .where {
+    display: grid;
+    align-content: start;
+    gap: 0.1rem;
+    font-size: var(--step--1);
+    padding-top: 0.4rem;
+  }
+
+  .where span:first-child {
+    font-weight: 600;
+  }
+
+  .title {
+    font-size: var(--step-3);
+    letter-spacing: -0.025em;
+    transition: color 160ms var(--ease);
+  }
+
+  .summary {
+    margin-top: 0.6rem;
+    max-width: 52ch;
+    color: var(--ink-2);
+  }
+
+  .mark {
+    display: grid;
+    align-content: space-between;
+    justify-items: end;
+    gap: 1rem;
+    text-align: right;
+  }
+
+  .metric .value,
+  .metric .label {
+    display: block;
+  }
+
+  .value {
+    font-size: var(--step-2);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .label {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    max-width: 16rem;
+  }
+
+  /* Scroll-driven 3D: each row swings in from a slight tilt. Compositor
+     only (transform), and nothing moves for reduced-motion users. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .project-list li {
+        animation: row-in linear both;
+        animation-timeline: view();
+        animation-range: entry 0% entry 90%;
+      }
+      @keyframes row-in {
+        from {
+          transform: perspective(1000px) rotateX(10deg) translateY(18px);
+        }
+      }
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .row::before,
+    .row :global(svg) {
+      transition: none;
+    }
+    .row:hover :global(svg) {
+      transform: none;
+    }
+  }
+
+  @media (max-width: 860px) {
+    .row {
+      grid-template-columns: 1fr;
+      gap: 0.75rem;
+    }
+    .where {
+      display: flex;
+      flex-wrap: wrap;
+      gap: 0 0.75rem;
+      padding-top: 0;
+    }
+    .mark {
+      grid-template-columns: minmax(0, 1fr) auto;
+      align-items: end;
+      justify-items: start;
+      text-align: left;
+    }
+  }
+</style>

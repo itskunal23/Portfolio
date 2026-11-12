@@ -1,0 +1,139 @@
+---
+import { proof } from "~/data/profile";
+---
+
+<section class="proof" aria-label="Results at a glance">
+  <div class="wrap">
+    <ul class="proof-grid glass-live">
+    {
+      proof.map((p) => (
+        <li>
+          <a href={p.href}>
+            <span class="value" data-count={p.value}>
+              {p.value}
+            </span>
+            <span class="label">{p.label}</span>
+          </a>
+        </li>
+      ))
+    }
+    </ul>
+  </div>
+</section>
+
+<script>
+  // One orchestrated moment: the numbers count up once, the first time the
+  // strip scrolls into view. The final values are in the HTML already, so
+  // without JS (or with reduced motion) nothing changes.
+  const strip = document.querySelector(".proof");
+  if (strip && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+    const els = [...strip.querySelectorAll<HTMLElement>("[data-count]")];
+    const io = new IntersectionObserver(
+      (entries) => {
+        if (!entries.some((e) => e.isIntersecting)) return;
+        io.disconnect();
+        const t0 = performance.now();
+        const parts = els.map((el) => {
+          const m = el.dataset.count!.match(/^(\D*)([\d.,]+)(.*)$/);
+          return m ? { el, pre: m[1]!, num: parseFloat(m[2]!.replace(/,/g, "")), dec: (m[2]!.split(".")[1] ?? "").length, post: m[3]! } : null;
+        });
+        const tick = (now: number) => {
+          const f = Math.min(1, (now - t0) / 900);
+          const ease = 1 - Math.pow(1 - f, 3);
+          for (const p of parts) {
+            if (!p) continue;
+            p.el.textContent = f < 1 ? `${p.pre}${(p.num * ease).toFixed(p.dec)}${p.post}` : p.el.dataset.count!;
+          }
+          if (f < 1) requestAnimationFrame(tick);
+        };
+        requestAnimationFrame(tick);
+      },
+      { threshold: 0.6 }
+    );
+    io.observe(strip);
+  }
+</script>
+
+<style>
+  /* Scroll-driven 3D: the pane tips up to face the reader as it arrives. */
+  @media (prefers-reduced-motion: no-preference) {
+    @supports (animation-timeline: view()) {
+      .proof-grid {
+        animation: tip-in linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 30%;
+      }
+      @keyframes tip-in {
+        from {
+          transform: perspective(1200px) rotateX(14deg) translateY(24px);
+        }
+      }
+    }
+  }
+
+  /* A frosted pane floating over the hero's colour field. */
+  .proof {
+    padding-block: clamp(2rem, 1rem + 3vw, 4rem);
+  }
+
+  .proof-grid {
+    display: grid;
+    grid-template-columns: repeat(4, minmax(0, 1fr));
+    list-style: none;
+    border-radius: var(--radius-l);
+    overflow: hidden;
+  }
+
+  .proof-grid li + li {
+    border-left: 1px solid var(--rule);
+  }
+
+  .proof a {
+    display: grid;
+    gap: 0.3rem;
+    height: 100%;
+    padding: clamp(1.25rem, 1rem + 1vw, 2rem) clamp(1rem, 0.5rem + 1.5vw, 2rem);
+    color: inherit;
+    text-decoration: none;
+    transition: background-color 160ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .proof a:hover {
+      background: color-mix(in srgb, var(--surface) 55%, transparent);
+    }
+  }
+
+  @media (hover: hover) {
+    .proof a:hover .label {
+      color: var(--auto);
+    }
+  }
+
+  .value {
+    font-size: var(--step-4);
+    font-weight: 650;
+    letter-spacing: -0.04em;
+    line-height: 1;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .label {
+    max-width: 22ch;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+    transition: color 160ms var(--ease);
+  }
+
+  @media (max-width: 860px) {
+    .proof-grid {
+      grid-template-columns: repeat(2, minmax(0, 1fr));
+    }
+    .proof-grid li + li:nth-child(odd) {
+      border-left: 0;
+    }
+    .proof-grid li:nth-child(n + 3) {
+      border-top: 1px solid var(--rule);
+    }
+  }
+</style>

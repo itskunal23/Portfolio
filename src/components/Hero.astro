@@ -1,0 +1,139 @@
+---
+import Laptop from "./Laptop.astro";
+import { profile } from "~/data/profile";
+---
+
+<section class="hero" aria-labelledby="hero-title">
+  <div class="wrap copy">
+    <p class="eyebrow">Kunal Goenka, Agentic AI at Boeing</p>
+    <h1 id="hero-title">
+      <span>Plan the request.</span>
+      <span>Ground the answer.</span>
+      <span>Know when to ask a person.</span>
+    </h1>
+    <p class="intro tone-swap">
+      <span class="tone-plain">
+        I build AI software that answers questions from company data, shows where its answers came from, and hands off
+        to a person when it isn't sure.
+      </span>
+      <span class="tone-engineer">
+        Agentic RAG on MCP tool servers and LangGraph state machines: hybrid retrieval, schema-validated tool calls,
+        citation self-evaluation, and confidence-gated human review.
+      </span>
+    </p>
+    <div class="actions">
+      <a class="button" href="#work">See selected work</a>
+      <button type="button" class="button quiet" data-fit-open aria-haspopup="dialog">Check my role fit</button>
+    </div>
+    <p class="more-links">
+      <a class="link" href="/resume/">Résumé</a>
+      <a class="link" href={profile.links.github} rel="me">GitHub</a>
+      <a class="link" href={profile.links.linkedin} rel="me">LinkedIn</a>
+    </p>
+  </div>
+  <div class="wrap stage">
+    <Laptop />
+  </div>
+</section>
+
+<style>
+  .hero {
+    overflow-x: clip;
+    padding-top: clamp(3rem, 2rem + 4vw, 6rem);
+    text-align: center;
+  }
+
+  .copy {
+    display: grid;
+    justify-items: center;
+  }
+
+  .eyebrow {
+    font-size: var(--step-1);
+    font-weight: 600;
+    color: var(--ink-2);
+  }
+
+  h1 {
+    display: grid;
+    margin-top: 0.75rem;
+    font-size: clamp(2.6rem, 1.2rem + 4.6vw, 5rem);
+    font-weight: 600;
+    letter-spacing: -0.025em;
+    line-height: 1.05;
+  }
+
+  .intro {
+    margin-top: 1.5rem;
+    max-width: 40ch;
+    font-size: clamp(1.2rem, 1rem + 0.6vw, 1.5rem);
+    line-height: 1.4;
+    color: var(--ink-2);
+  }
+
+  .actions {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.75rem 1rem;
+    margin-top: 2rem;
+  }
+
+  .more-links {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: center;
+    gap: 0.25rem 1.5rem;
+    margin-top: 1.25rem;
+    font-size: var(--step--1);
+  }
+
+  .more-links .link {
+    display: inline-flex;
+    align-items: center;
+    min-height: 32px;
+  }
+
+  /* The product shot: big, centred, and revealed by scrolling. */
+  .stage {
+    max-width: 1040px;
+    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    text-align: left;
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .copy > * {
+      animation: rise 800ms var(--ease) both;
+    }
+    .copy > :nth-child(2) {
+      animation-delay: 80ms;
+    }
+    .copy > :nth-child(3) {
+      animation-delay: 160ms;
+    }
+    .copy > :nth-child(n + 4) {
+      animation-delay: 240ms;
+    }
+    @keyframes rise {
+      from {
+        opacity: 0;
+        transform: translateY(14px);
+      }
+    }
+
+    /* Apple-style scroll reveal: the machine settles forward as it enters.
+       Driven by a CSS view timeline on the compositor; no scroll listeners. */
+    @supports (animation-timeline: view()) {
+      .stage {
+        animation: stage-in linear both;
+        animation-timeline: view();
+        animation-range: entry 0% cover 40%;
+      }
+      @keyframes stage-in {
+        from {
+          transform: perspective(1400px) rotateX(12deg) scale(0.94);
+        }
+      }
+    }
+  }
+</style>

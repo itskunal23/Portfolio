@@ -1,0 +1,552 @@
+---
+import { steps, wires, runs, wideLayout, narrowLayout } from "~/data/playground";
+---
+
+<section class="band ink-band playground light-field" aria-labelledby="play-title" data-play>
+  <div class="wrap">
+    <div class="intro">
+      <h2 id="play-title">Pipeline playground</h2>
+      <p class="tone-swap">
+        <span class="tone-plain">
+          This is roughly how the AI systems I build handle a question. Drag the steps around, then run a request and
+          watch where it goes. When the system isn't confident, it hands the question to a person.
+        </span>
+        <span class="tone-engineer">
+          The agentic retrieval pattern from my work: decomposition, MCP tool calls, hybrid search, cross-encoder
+          reranking, cited drafting, and a confidence gate with human review. Drag nodes to rearrange; run it to trace
+          both branches.
+        </span>
+      </p>
+    </div>
+
+    <div class="toolbar">
+      <button type="button" class="button run" data-run>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
+        <span data-run-label>Run a request</span>
+      </button>
+      <button type="button" class="button quiet" data-reset>Reset layout</button>
+      <p class="hint" id="play-hint">Drag a step to move it. With a keyboard, focus a step and use the arrow keys.</p>
+    </div>
+
+    <div class="board graph-paper" data-board>
+      <svg class="wires" aria-hidden="true">
+        {
+          wires.map((w) => (
+            <g data-wire={`${w.from}>${w.to}`} class:list={["wire", w.human && "human"]}>
+              <path class="base" />
+              <path class="lit" />
+            </g>
+          ))
+        }
+        <circle class="pulse" r="7" data-pulse></circle>
+      </svg>
+      {
+        steps.map((s) => (
+          <button
+            type="button"
+            class:list={["card", "glass", s.kind]}
+            data-card={s.id}
+            aria-describedby="play-hint"
+            data-wide={JSON.stringify(wideLayout[s.id])}
+            data-narrow={JSON.stringify(narrowLayout[s.id])}
+          >
+            {s.kind === "gate" && <span class="gate-mark" aria-hidden="true" />}
+            {s.label}
+          </button>
+        ))
+      }
+    </div>
+
+    <div class="log-wrap">
+      <p class="log-title" data-log-title>Run log</p>
+      <ol class="log" data-log aria-live="polite">
+        <li class="empty">Run a request to see each step in order.</li>
+      </ol>
+    </div>
+  </div>
+  <script type="application/json" data-play-data set:html={JSON.stringify({ steps, runs })} />
+</section>
+
+<script>
+  type Step = { id: string; label: string; says: string };
+  type Run = { label: string; path: string[] };
+
+  const root = document.querySelector<HTMLElement>("[data-play]");
+  if (root) {
+    const { steps, runs } = JSON.parse(root.querySelector("[data-play-data]")!.textContent!) as { steps: Step[]; runs: Run[] };
+    const byId = new Map(steps.map((s) => [s.id, s]));
+    const board = root.querySelector<HTMLElement>("[data-board]")!;
+    const cards = new Map([...board.querySelectorAll<HTMLButtonElement>("[data-card]")].map((c) => [c.dataset.card!, c]));
+    const wires = [...board.querySelectorAll<SVGGElement>("[data-wire]")];
+    const pulse = board.querySelector<SVGCircleElement>("[data-pulse]")!;
+    const log = root.querySelector<HTMLOListElement>("[data-log]")!;
+    const logTitle = root.querySelector<HTMLElement>("[data-log-title]")!;
+    const runBtn = root.querySelector<HTMLButtonElement>("[data-run]")!;
+    const runLabel = root.querySelector<HTMLElement>("[data-run-label]")!;
+    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
+    const pos = new Map<string, [number, number]>();
+    let runIndex = 0;
+    let running = false;
+    let raf = 0;
+
+    const narrowQuery = window.matchMedia("(max-width: 640px)");
+    const narrow = () => narrowQuery.matches;
+    const layout = () => {
+      for (const [id, card] of cards) pos.set(id, JSON.parse(narrow() ? card.dataset.narrow! : card.dataset.wide!));
+      measure();
+      place();
+    };
+
+    // Board size is read once per frame and cached, so moving cards (which
+    // only writes transforms) never forces a synchronous layout.
+    let W = 0;
+    let H = 0;
+    const measure = () => {
+      W = board.clientWidth;
+      H = board.clientHeight;
+    };
+
+    const placeCard = (id: string) => {
+      const [x, y] = pos.get(id)!;
+      cards.get(id)!.style.transform = `translate3d(${x * W}px, ${y * H}px, 0) translate(-50%, -50%)`;
+    };
+
+    /** Reposition cards and wires. With `only`, just that card and its wires. */
+    const place = (only?: string) => {
+      if (only) placeCard(only);
+      else for (const id of cards.keys()) placeCard(id);
+      drawWires(only);
+    };
+
+    const center = (id: string) => {
+      const [x, y] = pos.get(id)!;
+      return [x * W, y * H] as const;
+    };
+
+    const drawWires = (only?: string) => {
+      for (const g of wires) {
+        const [a, b] = g.dataset.wire!.split(">") as [string, string];
+        if (only && a !== only && b !== only) continue;
+        const [x1, y1] = center(a);
+        const [x2, y2] = center(b);
+        const dx = x2 - x1;
+        const dy = y2 - y1;
+        const d =
+          Math.abs(dx) >= Math.abs(dy)
+            ? `M${x1} ${y1} C${x1 + dx / 2} ${y1} ${x1 + dx / 2} ${y2} ${x2} ${y2}`
+            : `M${x1} ${y1} C${x1} ${y1 + dy / 2} ${x2} ${y1 + dy / 2} ${x2} ${y2}`;
+        g.querySelectorAll("path").forEach((p) => p.setAttribute("d", d));
+      }
+    };
+
+    // Keep a card's whole box inside the board, whatever its size.
+    const fit = (card: HTMLElement, x: number, y: number): [number, number] => {
+      const hx = Math.min(0.5, (card.offsetWidth / 2 + 8) / W);
+      const hy = Math.min(0.5, (card.offsetHeight / 2 + 8) / H);
+      return [Math.min(1 - hx, Math.max(hx, x)), Math.min(1 - hy, Math.max(hy, y))];
+    };
+
+    let dirty: string | undefined;
+    const schedule = (id: string) => {
+      dirty = id;
+      if (!raf) raf = requestAnimationFrame(() => ((raf = 0), place(dirty)));
+    };
+
+    // ---- Dragging (pointer) ----
+    for (const [id, card] of cards) {
+      let start: { x: number; y: number; px: number; py: number } | null = null;
+      let moved = false;
+      card.addEventListener("pointerdown", (e) => {
+        if (e.button !== 0) return;
+        card.setPointerCapture(e.pointerId);
+        const [px, py] = pos.get(id)!;
+        start = { x: e.clientX, y: e.clientY, px, py };
+        moved = false;
+        card.classList.add("dragging");
+      });
+      card.addEventListener("pointermove", (e) => {
+        if (!start) return;
+        const dx = e.clientX - start.x;
+        const dy = e.clientY - start.y;
+        if (!moved && Math.hypot(dx, dy) < 5) return;
+        moved = true;
+        pos.set(id, fit(card, start.px + dx / W, start.py + dy / H));
+        schedule(id);
+      });
+      const end = () => {
+        start = null;
+        card.classList.remove("dragging");
+      };
+      card.addEventListener("pointerup", end);
+      card.addEventListener("pointercancel", end);
+      // A drag isn't a click.
+      card.addEventListener("click", (e) => {
+        if (moved) {
+          e.preventDefault();
+          moved = false;
+          return;
+        }
+        explain(id);
+      });
+      // ---- Keyboard moving ----
+      card.addEventListener("keydown", (e) => {
+        const step = e.shiftKey ? 0.06 : 0.02;
+        const delta = { ArrowLeft: [-step, 0], ArrowRight: [step, 0], ArrowUp: [0, -step], ArrowDown: [0, step] }[e.key];
+        if (!delta) return;
+        e.preventDefault();
+        const [x, y] = pos.get(id)!;
+        pos.set(id, fit(card, x + delta[0]!, y + delta[1]!));
+        schedule(id);
+      });
+    }
+
+    const setLog = (items: string[], title: string) => {
+      logTitle.textContent = title;
+      log.replaceChildren(...items.map((t) => Object.assign(document.createElement("li"), { textContent: t })));
+    };
+
+    const explain = (id: string) => {
+      if (running) return;
+      const s = byId.get(id)!;
+      for (const c of cards.values()) c.classList.toggle("selected", c === cards.get(id));
+      setLog([`${s.label}: ${s.says}`], "Selected step");
+    };
+
+    const clearLit = () => {
+      board.querySelectorAll(".is-lit").forEach((el) => el.classList.remove("is-lit"));
+      for (const c of cards.values()) c.classList.remove("selected");
+    };
+
+    const travel = (path: SVGPathElement, ms: number) =>
+      new Promise<void>((done) => {
+        const len = path.getTotalLength();
+        const t0 = performance.now();
+        const tick = (now: number) => {
+          const f = Math.min(1, (now - t0) / ms);
+          const p = path.getPointAtLength(len * f);
+          pulse.setAttribute("cx", String(p.x));
+          pulse.setAttribute("cy", String(p.y));
+          if (f < 1) requestAnimationFrame(tick);
+          else done();
+        };
+        requestAnimationFrame(tick);
+      });
+
+    runBtn.addEventListener("click", async () => {
+      if (running) return;
+      running = true;
+      // aria-disabled keeps focus on the button (disabled would drop it).
+      runBtn.setAttribute("aria-disabled", "true");
+      runBtn.setAttribute("aria-busy", "true");
+      runBtn.style.setProperty("--progress", "0");
+      runLabel.textContent = "Tracing…";
+      const run = runs[runIndex % runs.length]!;
+      runIndex++;
+      clearLit();
+      log.replaceChildren();
+      logTitle.textContent = `Run: ${run.label.toLowerCase()}`;
+      const add = (id: string) => {
+        const s = byId.get(id)!;
+        cards.get(id)!.classList.add("is-lit");
+        log.append(Object.assign(document.createElement("li"), { textContent: `${s.label}: ${s.says}` }));
+      };
+      add(run.path[0]!);
+      pulse.classList.add("on");
+      for (let i = 1; i < run.path.length; i++) {
+        const g = board.querySelector<SVGGElement>(`[data-wire="${run.path[i - 1]}>${run.path[i]}"]`)!;
+        g.classList.add("is-lit");
+        if (!reduced.matches) await travel(g.querySelector<SVGPathElement>(".lit")!, 420);
+        add(run.path[i]!);
+        runBtn.style.setProperty("--progress", String(i / (run.path.length - 1)));
+      }
+      pulse.classList.remove("on");
+      // Reward the finished run: the step where it landed glows once.
+      const last = cards.get(run.path[run.path.length - 1]!)!;
+      last.classList.remove("arrived");
+      void last.offsetWidth;
+      last.classList.add("arrived");
+      running = false;
+      runBtn.removeAttribute("aria-disabled");
+      runBtn.removeAttribute("aria-busy");
+      runLabel.textContent = runIndex % runs.length ? "Run another request" : "Run a request";
+    });
+
+    root.querySelector("[data-reset]")!.addEventListener("click", layout);
+    new ResizeObserver(() => {
+      // Switch layouts when crossing the narrow breakpoint; otherwise just redraw.
+      const wasNarrow = board.dataset.narrow === "1";
+      if (narrow() !== wasNarrow || pos.size === 0) {
+        board.dataset.narrow = narrow() ? "1" : "0";
+        layout();
+      } else {
+        measure();
+        place();
+      }
+    }).observe(board);
+  }
+</script>
+
+<style>
+  .playground {
+    padding-block: clamp(4rem, 3rem + 5vw, 8rem);
+    background: var(--bg);
+    color: var(--ink);
+  }
+
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 5fr) minmax(0, 7fr);
+    gap: 1rem clamp(2rem, 1rem + 4vw, 5rem);
+    align-items: end;
+  }
+
+  h2 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+  }
+
+  .intro p {
+    max-width: 56ch;
+    color: var(--ink-2);
+    font-size: var(--step-1);
+    line-height: 1.45;
+  }
+
+  .toolbar {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 2.5rem;
+  }
+
+  /* Running: the button fills left to right as the request moves. */
+  .run[aria-busy="true"] {
+    cursor: progress;
+    background-image: linear-gradient(
+      90deg,
+      rgb(255 255 255 / 0.32) calc(var(--progress, 0) * 100%),
+      transparent calc(var(--progress, 0) * 100%)
+    );
+  }
+
+  .run[aria-busy="true"] svg {
+    animation: pulse-icon 900ms ease-in-out infinite alternate;
+  }
+
+  @keyframes pulse-icon {
+    to {
+      opacity: 0.35;
+    }
+  }
+
+  .hint {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .board {
+    position: relative;
+    height: clamp(460px, 42vw, 560px);
+    margin-top: 1.25rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-l);
+    background-color: color-mix(in srgb, var(--bg) 55%, transparent);
+    overflow: hidden;
+  }
+
+  .wires {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+  }
+
+  .wire path {
+    fill: none;
+    stroke-width: 2;
+  }
+
+  .wire .base {
+    stroke: var(--rule);
+  }
+
+  .wire.human .base {
+    stroke: var(--human-fill);
+    stroke-dasharray: 6 6;
+  }
+
+  .wire .lit {
+    stroke: var(--auto);
+    stroke-width: 3;
+    opacity: 0;
+    transition: opacity 200ms var(--ease);
+  }
+
+  .wire.human .lit {
+    stroke: var(--human-fill);
+  }
+
+  .wire.is-lit .lit {
+    opacity: 1;
+  }
+
+  .pulse {
+    fill: var(--auto);
+    opacity: 0;
+  }
+
+  .pulse.on {
+    opacity: 1;
+  }
+
+  .card {
+    position: absolute;
+    top: 0;
+    left: 0;
+    display: inline-flex;
+    align-items: center;
+    gap: 0.45rem;
+    min-height: 44px;
+    padding: 0.55rem 1rem;
+    border-radius: var(--radius-s);
+    color: var(--ink);
+    font: inherit;
+    font-weight: 500;
+    white-space: nowrap;
+    cursor: grab;
+    touch-action: none;
+    user-select: none;
+    box-shadow: 0 8px 20px -12px rgb(0 0 0 / 0.6);
+    transition:
+      border-color 160ms var(--ease),
+      background-color 160ms var(--ease),
+      box-shadow 200ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .card:hover {
+      border-color: var(--ink-2);
+    }
+  }
+
+  /* While dragging, a solid fill replaces the blur so the moving card
+     doesn't re-sample its backdrop every frame. */
+  .card.dragging {
+    cursor: grabbing;
+    z-index: 2;
+    will-change: transform;
+    background-color: var(--surface);
+    -webkit-backdrop-filter: none;
+    backdrop-filter: none;
+    box-shadow: 0 18px 30px -14px rgb(0 0 0 / 0.7);
+  }
+
+  .card.source {
+    border-style: dashed;
+    border-color: var(--ink-2);
+  }
+
+  .card.human {
+    background: var(--human-soft);
+    border-color: var(--human-fill);
+  }
+
+  .card.output {
+    background: var(--ink);
+    color: var(--bg);
+    border-color: var(--ink);
+  }
+
+  .card.selected {
+    outline: 2px solid var(--auto);
+    outline-offset: 2px;
+  }
+
+  .card.is-lit {
+    border-color: var(--auto);
+    background: var(--auto-soft);
+    color: var(--ink);
+  }
+
+  @media (prefers-reduced-motion: no-preference) {
+    .card.arrived {
+      animation: arrived 900ms var(--ease);
+    }
+  }
+
+  @keyframes arrived {
+    0% {
+      box-shadow: 0 0 0 0 color-mix(in srgb, var(--auto) 70%, transparent);
+    }
+    100% {
+      box-shadow: 0 0 0 18px transparent;
+    }
+  }
+
+  .card.human.is-lit {
+    background: var(--human-fill);
+    color: #1a1206;
+  }
+
+  .card.output.is-lit {
+    background: var(--auto);
+    border-color: var(--auto);
+    color: var(--on-accent);
+  }
+
+  .gate-mark {
+    width: 8px;
+    height: 8px;
+    transform: rotate(45deg);
+    border: 1.5px solid var(--auto);
+  }
+
+  .log-wrap {
+    margin-top: 1.5rem;
+    min-height: 7rem;
+  }
+
+  .log-title {
+    font-weight: 600;
+  }
+
+  .log {
+    margin-top: 0.5rem;
+    padding-left: 1.4em;
+    color: var(--ink-2);
+    max-width: 72ch;
+  }
+
+  .log li + li {
+    margin-top: 0.25rem;
+  }
+
+  .log .empty {
+    list-style: none;
+    margin-left: -1.4em;
+  }
+
+  @media (max-width: 860px) {
+    .intro {
+      grid-template-columns: 1fr;
+    }
+  }
+
+  @media (max-width: 640px) {
+    .board {
+      height: 760px;
+    }
+    .card {
+      padding-inline: 0.8rem;
+      font-size: var(--step--1);
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .card,
+    .wire .lit {
+      transition: none;
+    }
+  }
+</style>

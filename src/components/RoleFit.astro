@@ -1,0 +1,534 @@
+---
+import { questions } from "~/data/rolefit";
+import { profile } from "~/data/profile";
+---
+
+<aside class="fit-dock" aria-label="Role-fit check">
+  <button type="button" class="fit-pill" data-fit-open aria-haspopup="dialog">
+    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h3l2-4 2 8 2-4h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
+    <span class="pill-label">Role-fit check</span>
+  </button>
+</aside>
+
+<dialog class="fit-sheet" aria-labelledby="fit-title" data-fit>
+  <header class="sheet-head">
+    <div>
+      <h2 id="fit-title">Role-fit check</h2>
+      <p class="muted">Three questions. You get the parts of my work that match, with links to the evidence. Nothing is stored or sent.</p>
+    </div>
+    <button type="button" class="close" data-fit-close aria-label="Close role-fit check">
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+    </button>
+  </header>
+
+  <form class="quiz" data-quiz data-email={profile.email} novalidate>
+    <p class="progress" data-progress aria-live="polite">Question 1 of {questions.length}</p>
+    {
+      questions.map((q, qi) => (
+        <fieldset class="q" data-q={q.id} hidden={qi !== 0}>
+          <legend>{q.prompt}</legend>
+          <div class="options">
+            {q.options.map((o) => (
+              <label class="option">
+                <input type="radio" name={q.id} value={o.id} />
+                <span>{o.label}</span>
+              </label>
+            ))}
+          </div>
+          <div class="nav">
+            {qi > 0 && (
+              <button type="button" class="button quiet" data-back>
+                Back
+              </button>
+            )}
+            <button type="button" class="button" data-next disabled>
+              {qi === questions.length - 1 ? "See the match" : "Next"}
+            </button>
+          </div>
+        </fieldset>
+      ))
+    }
+
+    <div class="result" data-result hidden tabindex="-1">
+      <p class="score" data-score></p>
+      <h3 data-headline></h3>
+      <div class="meter" aria-hidden="true"><span data-meter></span></div>
+      <ul class="evidence" data-evidence></ul>
+      <div class="cta">
+        <a class="button" data-mail href={`mailto:${profile.email}`}>Email me about this role</a>
+        <button type="button" class="button quiet" data-restart>Start over</button>
+      </div>
+    </div>
+  </form>
+  <script type="application/json" data-fit-data set:html={JSON.stringify(questions)} />
+</dialog>
+
+<script>
+  import { verdict, type FitQuestion } from "~/data/rolefit";
+
+  const root = document.querySelector<HTMLElement>("[data-fit]");
+  if (root instanceof HTMLDialogElement) {
+    // Native modal: top layer (no z-index), focus containment and Esc for free.
+    const opener = document.querySelector<HTMLButtonElement>("[data-fit-open]");
+    let returnTo: HTMLElement | null = null;
+    const open = (from: HTMLElement) => {
+      returnTo = from;
+      root.showModal();
+      root.querySelector<HTMLElement>("fieldset:not([hidden]) input, [data-result]:not([hidden])")?.focus();
+    };
+    document.addEventListener("click", (e) => {
+      const btn = (e.target as Element).closest<HTMLElement>("[data-fit-open]");
+      if (btn) open(btn);
+    });
+    root.querySelector("[data-fit-close]")!.addEventListener("click", () => root.close());
+    // Backdrop clicks report the dialog as target but land outside its box.
+    root.addEventListener("click", (e) => {
+      if (e.target !== root) return;
+      const r = root.getBoundingClientRect();
+      const inside = e.clientX >= r.left && e.clientX <= r.right && e.clientY >= r.top && e.clientY <= r.bottom;
+      if (!inside) root.close();
+    });
+    root.addEventListener("close", () => (returnTo ?? opener)?.focus());
+
+    // The floating pill steps aside while another role-fit button is already
+    // on screen (the hero's), so the two never stack over each other.
+    const dock = document.querySelector<HTMLElement>(".fit-dock");
+    const others = [...document.querySelectorAll<HTMLElement>("[data-fit-open]")].filter((b) => !b.closest(".fit-dock"));
+    if (dock && others.length && "IntersectionObserver" in window) {
+      const onScreen = new Set<Element>();
+      const io = new IntersectionObserver((entries) => {
+        for (const e of entries) {
+          // A zero-size box is a button hidden at this width (the header's).
+          if (e.isIntersecting && e.boundingClientRect.width > 0) onScreen.add(e.target);
+          else onScreen.delete(e.target);
+        }
+        const tucked = onScreen.size > 0;
+        dock.classList.toggle("is-tucked", tucked);
+        dock.inert = tucked;
+      });
+      others.forEach((b) => io.observe(b));
+    }
+
+    const questions = JSON.parse(root.querySelector("[data-fit-data]")!.textContent!) as FitQuestion[];
+    const form = root.querySelector<HTMLFormElement>("[data-quiz]")!;
+    const sets = [...form.querySelectorAll<HTMLFieldSetElement>("[data-q]")];
+    const progress = form.querySelector<HTMLElement>("[data-progress]")!;
+    const result = form.querySelector<HTMLElement>("[data-result]")!;
+    let index = 0;
+
+    const show = (i: number) => {
+      index = i;
+      sets.forEach((s, k) => (s.hidden = k !== i));
+      result.hidden = true;
+      progress.hidden = false;
+      progress.textContent = `Question ${i + 1} of ${sets.length}`;
+      sets[i]!.querySelector<HTMLInputElement>("input")?.focus({ preventScroll: true });
+    };
+
+    const finish = () => {
+      const chosen = questions.map((q) => {
+        const v = (form.elements.namedItem(q.id) as RadioNodeList).value;
+        return q.options.find((o) => o.id === v)!;
+      });
+      const v = verdict(chosen);
+      sets.forEach((s) => (s.hidden = true));
+      progress.hidden = true;
+      result.hidden = false;
+      result.querySelector("[data-score]")!.textContent =
+        `${v.direct} of ${chosen.length} answers map directly to shipped work` + (v.partial ? `, ${v.partial} partly` : "");
+      result.querySelector("[data-headline]")!.textContent = v.headline;
+      result.querySelector<HTMLElement>("[data-meter]")!.style.setProperty("--fill", String(v.score / chosen.length));
+      const list = result.querySelector("[data-evidence]")!;
+      list.replaceChildren(
+        ...chosen.map((o, k) => {
+          const li = document.createElement("li");
+          const q = Object.assign(document.createElement("p"), { className: "ev-q", textContent: `${questions[k]!.prompt} ${o.label}` });
+          const tag = Object.assign(document.createElement("span"), {
+            className: `ev-tag ${o.strength}`,
+            textContent: o.strength === "direct" ? "Shipped" : "Related"
+          });
+          q.prepend(tag);
+          const ul = document.createElement("ul");
+          for (const e of o.evidence) {
+            const a = Object.assign(document.createElement("a"), { className: "link", href: e.href, textContent: e.text });
+            const item = document.createElement("li");
+            item.append(a);
+            ul.append(item);
+          }
+          li.append(q, ul);
+          return li;
+        })
+      );
+      const subject = `Role: ${chosen[0]!.label} (via your portfolio)`;
+      const body = `Hi Kunal,\n\nI'm hiring for: ${chosen[0]!.label}\nWhat matters most: ${chosen[1]!.label}\nSetting: ${chosen[2]!.label}\n\n`;
+      result.querySelector<HTMLAnchorElement>("[data-mail]")!.href =
+        `mailto:${form.dataset.email}?subject=${encodeURIComponent(subject)}&body=${encodeURIComponent(body)}`;
+      result.focus();
+    };
+
+    const advance = () => (index < sets.length - 1 ? show(index + 1) : finish());
+    let pointer = false;
+    form.addEventListener("pointerdown", () => (pointer = true));
+    form.addEventListener("keydown", () => (pointer = false));
+    form.addEventListener("change", (e) => {
+      const input = e.target as HTMLInputElement;
+      if (input.type !== "radio") return;
+      sets[index]!.querySelector<HTMLButtonElement>("[data-next]")!.disabled = false;
+      // Clicks advance on their own; keyboard users confirm with Next.
+      if (pointer) window.setTimeout(advance, 220);
+    });
+    form.querySelectorAll("[data-next]").forEach((b) => b.addEventListener("click", advance));
+    form.addEventListener("submit", (e) => e.preventDefault());
+    form.querySelectorAll("[data-back]").forEach((b) => b.addEventListener("click", () => show(index - 1)));
+    form.querySelector("[data-restart]")!.addEventListener("click", () => {
+      form.reset();
+      form.querySelectorAll<HTMLButtonElement>("[data-next]").forEach((b) => (b.disabled = true));
+      show(0);
+    });
+  }
+</script>
+
+<style>
+  /* Floating utility layer: a pill pinned to the corner of every page. */
+  .fit-dock {
+    position: fixed;
+    right: max(16px, env(safe-area-inset-right));
+    bottom: max(16px, env(safe-area-inset-bottom));
+    z-index: var(--z-sticky);
+  }
+
+  .fit-dock {
+    transition:
+      opacity 200ms var(--ease),
+      transform 200ms var(--ease),
+      visibility 0s linear 0s;
+  }
+
+  .fit-dock.is-tucked {
+    opacity: 0;
+    transform: translateY(8px) scale(0.96);
+    visibility: hidden;
+    transition:
+      opacity 200ms var(--ease),
+      transform 200ms var(--ease),
+      visibility 0s linear 200ms;
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .fit-dock,
+    .fit-dock.is-tucked {
+      transition: none;
+    }
+  }
+
+  @media (min-width: 1101px) {
+    .fit-dock {
+      display: none;
+    }
+  }
+
+  .fit-pill {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    min-height: 44px;
+    padding: 0.55rem 1.05rem 0.55rem 0.9rem;
+    border: 1px solid var(--glass-border);
+    border-radius: 999px;
+    background: var(--glass-bg-strong);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 10px 30px -10px rgb(var(--shadow) / 0.35);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    color: var(--ink);
+    font: inherit;
+    font-size: var(--step--1);
+    font-weight: 600;
+    cursor: pointer;
+    transition:
+      transform 160ms var(--ease),
+      border-color 160ms var(--ease);
+  }
+
+  .fit-pill svg {
+    color: var(--auto);
+  }
+
+  @media (hover: hover) {
+    .fit-pill:hover {
+      border-color: var(--ink-2);
+    }
+  }
+
+  .fit-pill:active {
+    transform: scale(0.97);
+  }
+
+  /* The sheet: a native modal dialog, styled like a macOS sheet. */
+  .fit-sheet {
+    width: min(40rem, calc(100vw - 32px));
+    max-height: min(46rem, calc(100dvh - 32px));
+    padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-l);
+    background: var(--glass-bg-strong);
+    box-shadow: inset 0 1px 0 var(--glass-edge), 0 30px 80px -20px rgb(var(--shadow) / 0.45);
+    -webkit-backdrop-filter: var(--glass-filter);
+    backdrop-filter: var(--glass-filter);
+    color: var(--ink);
+    overflow-y: auto;
+    overscroll-behavior: contain;
+  }
+
+  .fit-sheet::backdrop {
+    background: rgb(var(--shadow) / 0.28);
+    -webkit-backdrop-filter: blur(6px);
+    backdrop-filter: blur(6px);
+  }
+
+  .fit-sheet[open] {
+    animation: sheet-in 260ms var(--ease);
+  }
+
+  @keyframes sheet-in {
+    from {
+      opacity: 0;
+      transform: translateY(12px) scale(0.98);
+    }
+  }
+
+  .sheet-head {
+    display: flex;
+    align-items: start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding-bottom: 1rem;
+    margin-bottom: 1rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .sheet-head h2 {
+    font-size: var(--step-2);
+    letter-spacing: -0.02em;
+  }
+
+  .sheet-head p {
+    margin-top: 0.3rem;
+    max-width: 46ch;
+    font-size: var(--step--1);
+  }
+
+  .close {
+    display: grid;
+    place-items: center;
+    flex: none;
+    width: 32px;
+    height: 32px;
+    border: 0;
+    border-radius: 50%;
+    background: var(--sunken);
+    color: var(--ink-2);
+    cursor: pointer;
+  }
+
+  @media (hover: hover) {
+    .close:hover {
+      color: var(--ink);
+    }
+  }
+
+  .progress {
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  fieldset {
+    margin: 0.75rem 0 0;
+    padding: 0;
+    border: 0;
+  }
+
+  legend {
+    padding: 0;
+    font-size: var(--step-3);
+    font-weight: 600;
+    letter-spacing: -0.02em;
+    line-height: 1.15;
+  }
+
+  .options {
+    display: grid;
+    gap: 0.6rem;
+    margin-top: 1.5rem;
+  }
+
+  .option {
+    position: relative;
+    display: flex;
+    align-items: center;
+    min-height: 52px;
+    padding: 0.75rem 1rem;
+    border: 1px solid var(--glass-border);
+    border-radius: var(--radius-s);
+    background: var(--glass-bg);
+    font-weight: 500;
+    cursor: pointer;
+    transition:
+      border-color 150ms var(--ease),
+      background-color 150ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .option:hover {
+      border-color: var(--ink-2);
+    }
+  }
+
+  .option input {
+    position: absolute;
+    opacity: 0;
+    inset: 0;
+    margin: 0;
+    cursor: pointer;
+  }
+
+  .option:has(input:checked) {
+    border-color: var(--auto);
+    background: var(--auto-soft);
+  }
+
+  .option:has(input:focus-visible) {
+    outline: 2px solid var(--auto);
+    outline-offset: 2px;
+  }
+
+  .nav {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 1.25rem;
+  }
+
+  .nav [disabled] {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
+
+  .result:focus {
+    outline: none;
+  }
+
+  .score {
+    color: var(--ink-2);
+    font-size: var(--step--1);
+  }
+
+  .result h3 {
+    margin-top: 0.4rem;
+    font-size: var(--step-3);
+    letter-spacing: -0.02em;
+  }
+
+  .meter {
+    height: 6px;
+    margin-top: 1rem;
+    border-radius: 999px;
+    background: var(--rule);
+    overflow: hidden;
+  }
+
+  .meter span {
+    display: block;
+    height: 100%;
+    width: calc(var(--fill, 0) * 100%);
+    background: var(--auto);
+    transition: width 600ms var(--ease);
+  }
+
+  .evidence {
+    display: grid;
+    gap: 1.25rem;
+    margin-top: 1.75rem;
+    list-style: none;
+  }
+
+  .evidence :global(.ev-q) {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.5rem;
+    font-weight: 600;
+  }
+
+  .evidence :global(.ev-tag) {
+    padding: 0.1rem 0.55rem;
+    border-radius: 999px;
+    font-size: var(--step--1);
+    font-weight: 500;
+    background: var(--auto-soft);
+    color: var(--ink);
+  }
+
+  .evidence :global(.ev-tag.partial) {
+    background: var(--human-soft);
+  }
+
+  .evidence :global(ul) {
+    margin-top: 0.4rem;
+    padding-left: 1.1em;
+  }
+
+  .evidence :global(li li) {
+    margin-top: 0.25rem;
+  }
+
+  .evidence :global(a) {
+    display: inline-block;
+    padding-block: 0.15rem;
+  }
+
+  .cta {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.75rem;
+    margin-top: 2rem;
+  }
+
+
+  @media (max-width: 640px) {
+    /* Icon-only on phones so it covers as little text as possible. */
+    .fit-pill {
+      width: 48px;
+      height: 48px;
+      padding: 0;
+      justify-content: center;
+    }
+    .fit-pill svg {
+      width: 20px;
+      height: 20px;
+    }
+    .pill-label {
+      position: absolute;
+      width: 1px;
+      height: 1px;
+      overflow: hidden;
+      clip-path: inset(50%);
+      white-space: nowrap;
+    }
+    .fit-sheet {
+      width: 100vw;
+      max-width: none;
+      margin: auto 0 0;
+      border-radius: var(--radius-l) var(--radius-l) 0 0;
+      max-height: 92dvh;
+    }
+  }
+
+  @media (prefers-reduced-motion: reduce) {
+    .meter span {
+      transition: none;
+    }
+    .fit-sheet[open] {
+      animation: none;
+    }
+  }
+</style>

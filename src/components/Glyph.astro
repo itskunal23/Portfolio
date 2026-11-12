@@ -1,0 +1,73 @@
+---
+// A project's execution graph reduced to its shape: a small fingerprint used
+// in project lists. Purely decorative; the row's text carries the meaning.
+import type { Graph } from "~/data/types";
+
+interface Props {
+  graph: Graph;
+}
+const { graph } = Astro.props;
+const U = 18;
+const w = graph.cols * U;
+const h = Math.max(graph.rows, 2) * U;
+const pos = new Map(graph.nodes.map((n) => [n.id, { x: (n.col - 0.5) * U, y: (n.row - 0.5) * U + (h - graph.rows * U) / 2, kind: n.kind }]));
+const d = (a: string, b: string) => {
+  const p = pos.get(a)!;
+  const q = pos.get(b)!;
+  if (p.y === q.y || p.x === q.x) return `M${p.x} ${p.y}L${q.x} ${q.y}`;
+  const mx = (p.x + q.x) / 2;
+  return `M${p.x} ${p.y}C${mx} ${p.y} ${mx} ${q.y} ${q.x} ${q.y}`;
+};
+---
+
+<svg class="glyph" viewBox={`0 0 ${w} ${h}`} width={w} height={h} aria-hidden="true" focusable="false">
+  {graph.edges.map((e) => <path class:list={["e", e.kind === "human" && "h"]} d={d(e.from, e.to)} />)}
+  {
+    [...pos.values()].map((p) => (
+      <circle class:list={["n", p.kind ?? "step"]} cx={p.x} cy={p.y} r={p.kind === "gate" ? 3.4 : 3} />
+    ))
+  }
+</svg>
+
+<style>
+  .glyph {
+    overflow: visible;
+    max-width: 100%;
+    height: auto;
+  }
+  .e {
+    fill: none;
+    stroke: var(--rule);
+    stroke-width: 1.25;
+    transition: stroke 220ms var(--ease);
+  }
+  .e.h {
+    stroke: var(--human-fill);
+    stroke-dasharray: 3 3;
+  }
+  .n {
+    fill: var(--ink-2);
+    transition: fill 220ms var(--ease);
+  }
+  .n.source {
+    fill: var(--bg);
+    stroke: var(--ink-2);
+    stroke-width: 1.25;
+  }
+  .n.human {
+    fill: var(--human-fill);
+  }
+  .n.output {
+    fill: var(--ink);
+  }
+  :global(a:hover) .e:not(.h),
+  :global(a:focus-visible) .e:not(.h) {
+    stroke: var(--auto);
+  }
+  :global(a:hover) .n.step,
+  :global(a:hover) .n.gate,
+  :global(a:focus-visible) .n.step,
+  :global(a:focus-visible) .n.gate {
+    fill: var(--auto);
+  }
+</style>

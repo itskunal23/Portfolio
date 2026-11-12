@@ -1,0 +1,324 @@
+---
+import { Image } from "astro:assets";
+import Base from "~/layouts/Base.astro";
+import portrait from "~/assets/kunal-goenka.jpg";
+import { profile, topSkills, principles } from "~/data/profile";
+import { expertise } from "~/data/expertise";
+import { education } from "~/data/education";
+import { recognition } from "~/data/experience";
+import { projectBySlug } from "~/data/projects";
+---
+
+<Base
+  path="/about/"
+  title="About"
+  description="About Kunal Goenka: AI engineer at Boeing working on agentic AI, RAG, and full-stack applications; MS Computer Science (AI) at Georgia Tech; BS Business Information Technology, Virginia Tech."
+>
+  <div class="wrap intro">
+    <div class="intro-text">
+      <h1>About</h1>
+      <p class="lede">{profile.philosophy}</p>
+    </div>
+    <Image
+      src={portrait}
+      alt="Kunal Goenka, smiling, in a blue blazer in front of a wooden slat wall"
+      widths={[240, 360, 480]}
+      sizes="(max-width: 760px) 60vw, 240px"
+      class="portrait"
+      loading="eager"
+    />
+  </div>
+
+  <section class="wrap story" aria-label="Background">
+    <div class="prose">
+      <p>
+        I build AI-powered applications and software that solve real problems. I joined Boeing as a new graduate in July
+        2025, and since then I've worked across applied AI, machine learning, and full-stack development, with a focus on
+        taking projects from an idea to a working solution.
+      </p>
+      <p>
+        My first rotation was with ELORA, Boeing's employee listening and organizational research team, where I built
+        multilingual NLP pipelines and a secure semantic search engine. Since January 2026 I've been in Enterprise AI &
+        Data, working on an agentic RAG framework, document ingestion, parts matching, an intern recruiting platform, and
+        the website for the 2026 AI Summit, and my current rotation focuses on broader enterprise agentic AI initiatives.
+        Along the way I've
+        helped organize events for Boeing's GenAI Community of Practice and presented on the AI tools we use day to day.
+      </p>
+      <p>
+        The part I care about most is where the system meets the person using it. The model is rarely the whole problem.
+        A useful system knows where its answers came from, knows when it's unsure and should hand off to someone, and fits
+        the way people already work. That's what building at the intersection of AI systems, design, and how people think
+        means in practice.
+      </p>
+      <p>
+        In August 2026 I started an MS in Computer Science at Georgia Tech, specializing in artificial intelligence. I'm
+        interested in AI engineering and software engineering roles where I can build intelligent features into real
+        products, from the backend systems and AI architecture to the applications people interact with.
+      </p>
+    </div>
+    <aside class="top-skills" aria-labelledby="top-skills">
+      <h2 id="top-skills">Top skills</h2>
+      <ul>{topSkills.map((s) => <li>{s}</li>)}</ul>
+    </aside>
+  </section>
+
+  <section class="wrap principles" aria-labelledby="principles-title">
+    <h2 id="principles-title">How I build</h2>
+    <ul>
+      {
+        principles.map((p) => (
+          <li>
+            <h3>{p.title}</h3>
+            <p>{p.body}</p>
+          </li>
+        ))
+      }
+    </ul>
+  </section>
+
+  <section class="section expertise" aria-labelledby="expertise">
+    <div class="wrap">
+      <div class="section-head">
+        <h2 id="expertise">Technical expertise</h2>
+        <p>Grouped by the job each tool does in a shipped system, with the work where it shows up.</p>
+      </div>
+      <div class="areas">
+        {
+          expertise.map((a) => (
+            <section class="area" aria-label={a.area}>
+              <h3>{a.area}</h3>
+              <p class="what">{a.what}</p>
+              <ul class="tags">{a.tools.map((t) => <li>{t}</li>)}</ul>
+              <p class="seen">
+                <span class="muted">Used in </span>
+                {a.seenIn.map((slug, i) => (<Fragment><a class="link" href={`/work/${slug}/`}>{projectBySlug(slug)!.title}</a>{i < a.seenIn.length - 1 ? ", " : ""}</Fragment>))}
+              </p>
+            </section>
+          ))
+        }
+      </div>
+    </div>
+  </section>
+
+  <section id="education" class="wrap education" aria-labelledby="education-title">
+    <h2 id="education-title">Education</h2>
+    <ol class="group">
+    {
+      education.map((e, i) => (
+        <li class:list={["school", i === 0 && "featured"]}>
+          <div class="when">
+            <p>
+              <time>{e.start}</time> to <time>{e.end}</time>
+            </p>
+            <p class="muted">{e.status}</p>
+          </div>
+          <div>
+            <h3>{e.school}</h3>
+            <p class="degree">{e.degree}</p>
+            <p class="muted">{e.focus}</p>
+            {e.notes.length > 0 && <div class="prose notes">{e.notes.map((n) => <p>{n}</p>)}</div>}
+            {"activities" in e && (
+              <>
+                <h4>Activities</h4>
+                <ul class="activities">{e.activities.map((a) => <li>{a}</li>)}</ul>
+              </>
+            )}
+          </div>
+        </li>
+      ))
+    }
+    </ol>
+  </section>
+
+  <section class="wrap recognition" aria-labelledby="recognition">
+    <h2 id="recognition">Recognition</h2>
+    {
+      recognition.map((r) => (
+        <p>
+          <strong>{r.title}</strong>, {r.org}. {r.body}
+        </p>
+      ))
+    }
+  </section>
+</Base>
+
+<style>
+  .intro {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) 240px;
+    gap: 2rem clamp(2rem, 1rem + 4vw, 6rem);
+    align-items: end;
+    padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(2rem, 1rem + 2vw, 3rem);
+  }
+
+  h1 {
+    font-size: var(--step-5);
+    letter-spacing: -0.045em;
+  }
+
+  .lede {
+    margin-top: 1.25rem;
+    max-width: 24ch;
+    font-size: var(--step-3);
+    line-height: 1.2;
+    letter-spacing: -0.02em;
+  }
+
+  .portrait {
+    width: 100%;
+    height: auto;
+    aspect-ratio: 1;
+    object-fit: cover;
+    border-radius: var(--radius-m);
+    filter: saturate(0.9);
+  }
+
+  .story {
+    display: grid;
+    grid-template-columns: minmax(0, 8fr) minmax(0, 4fr);
+    gap: 2rem clamp(2rem, 1rem + 4vw, 6rem);
+    padding-bottom: clamp(3rem, 2rem + 3vw, 5rem);
+  }
+
+  .top-skills h2 {
+    font-size: var(--step-0);
+  }
+
+  .top-skills ul {
+    margin-top: 0.75rem;
+    list-style: none;
+    border-top: 1px solid var(--rule);
+  }
+
+  .top-skills li {
+    padding-block: 0.6rem;
+    border-bottom: 1px solid var(--rule);
+  }
+
+  .principles {
+    padding-bottom: clamp(3rem, 2rem + 3vw, 5rem);
+  }
+
+  .principles > h2 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+  }
+
+  .principles ul {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 2rem clamp(2rem, 1rem + 4vw, 5rem);
+    margin-top: 2rem;
+    list-style: none;
+  }
+
+  .principles h3 {
+    font-size: var(--step-2);
+  }
+
+  .principles p {
+    margin-top: 0.5rem;
+    max-width: 46ch;
+    color: var(--ink-2);
+  }
+
+  .expertise {
+    background: var(--surface);
+    border-block: 1px solid var(--rule);
+  }
+
+  .areas {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: clamp(2.5rem, 2rem + 2vw, 4rem) clamp(2rem, 1rem + 4vw, 5rem);
+  }
+
+  .area h3 {
+    font-size: var(--step-2);
+  }
+
+  .area .what {
+    margin-top: 0.5rem;
+    max-width: 46ch;
+    color: var(--ink-2);
+  }
+
+  .area .tags {
+    margin-top: 1.1rem;
+  }
+
+  .seen {
+    margin-top: 1rem;
+    font-size: var(--step--1);
+    line-height: 1.9;
+  }
+
+  .education,
+  .recognition {
+    padding-top: clamp(3rem, 2rem + 3vw, 5rem);
+  }
+
+  .education > h2,
+  .recognition > h2 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+    margin-bottom: 1.5rem;
+  }
+
+  .school {
+    display: grid;
+    grid-template-columns: minmax(0, 3fr) minmax(0, 9fr);
+    gap: 0.75rem clamp(1.5rem, 1rem + 3vw, 4rem);
+  }
+
+  .group > .school {
+    padding-block: clamp(1.5rem, 1.2rem + 1.5vw, 2.5rem);
+  }
+
+  .school h3 {
+    font-size: var(--step-2);
+  }
+
+  .school.featured h3 {
+    font-size: var(--step-4);
+    letter-spacing: -0.035em;
+  }
+
+  .degree {
+    margin-top: 0.4rem;
+    font-size: var(--step-1);
+  }
+
+  .notes {
+    margin-top: 1.25rem;
+  }
+
+  .school h4 {
+    margin-top: 1.5rem;
+    font-size: var(--step-0);
+  }
+
+  .activities {
+    margin-top: 0.5rem;
+    padding-left: 1.1em;
+    color: var(--ink-2);
+  }
+
+  .recognition p {
+    max-width: 62ch;
+  }
+
+  @media (max-width: 860px) {
+    .intro,
+    .story,
+    .areas,
+    .principles ul,
+    .school {
+      grid-template-columns: 1fr;
+    }
+    .portrait {
+      max-width: 200px;
+      grid-row: 1;
+    }
+  }
+</style>

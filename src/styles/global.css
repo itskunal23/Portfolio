@@ -1,0 +1,596 @@
+/*
+  Design system for Kunal Goenka's portfolio.
+
+  Concept: execution graphs. Kunal's work is about explicit paths through a
+  system and the points where a person takes over. Color encodes that:
+    --auto  (cobalt) marks automated paths and links
+    --human (amber)  marks steps where a person makes the call
+  Everything else stays quiet: mineral paper, graphite ink, one sans family
+  for interface and headings, one serif for long-form reading.
+*/
+
+:root {
+  color-scheme: light dark;
+
+  /* Apple-style light: white pages, #f5f5f7 tiles, near-black ink. */
+  --bg: #ffffff;
+  --surface: #ffffff;
+  --sunken: #f5f5f7;
+  --ink: #1d1d1f;
+  --ink-2: #6e6e73;
+  --rule: #d2d2d7;
+  --auto: #0066cc;
+  --auto-soft: #e8f1fc;
+  --cta: #0071e3;
+  --cta-hover: #0077ed;
+  --cta-ink: #ffffff;
+  --human: #9a5a00;
+  --human-fill: #e9a640;
+  --human-soft: #f6e3c2;
+  --shadow: 26 33 41;
+
+  /* The system UI face: SF Pro on Apple devices, Segoe UI on Windows.
+     Nothing to download. Named fallbacks that aren't installed (SF Pro,
+     Helvetica Neue) cost seconds of font lookup on Windows, so none are
+     listed: system-ui alone resolves to SF on Apple platforms. */
+  --font-sans: system-ui, sans-serif;
+  --font-serif: var(--font-sans);
+
+  /* Type scale, ratio ~1.25 with fluid display sizes. */
+  --step--1: 0.875rem;
+  --step-0: 1.0625rem;
+  --step-1: 1.25rem;
+  --step-2: 1.5625rem;
+  --step-3: clamp(1.75rem, 1.4rem + 1.4vw, 2.25rem);
+  --step-4: clamp(2.25rem, 1.6rem + 2.8vw, 3.5rem);
+  --step-5: clamp(2.75rem, 1.6rem + 5vw, 5.75rem);
+
+  --gutter: clamp(16px, 4vw, 48px);
+  --max: 1240px;
+  --measure: 66ch;
+  --radius-s: 12px;
+  --radius-m: 20px;
+  --radius-l: 28px;
+
+  /*
+    Elevation. Three layers, like a macOS window over its desktop:
+    base (the page and recessed groups), raised (glass panes that scroll with
+    content), sticky (header and the role-fit pill). Modals use the browser's
+    top layer and need no z-index.
+  */
+  --z-base: 0;
+  --z-raised: 1;
+  --z-sticky: 50;
+  --ease: cubic-bezier(0.2, 0.7, 0.1, 1);
+  --on-accent: #fff;
+  --grid-line: #ececf0;
+  --grain: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='160' height='160'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='.85' numOctaves='2' stitchTiles='stitch'/%3E%3CfeColorMatrix values='0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 0 .045 0'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E");
+
+  /* Glass: translucent surfaces that frost whatever sits behind them. */
+  --glass-bg: rgb(255 255 255 / 0.55);
+  --glass-bg-strong: rgb(255 255 255 / 0.72);
+  --glass-edge: rgb(255 255 255 / 0.85);
+  --glass-border: rgb(26 33 41 / 0.1);
+  --glass-shadow: 0 1px 1px rgb(26 33 41 / 0.04), 0 8px 24px -8px rgb(26 33 41 / 0.14);
+  --glass-filter: saturate(180%) blur(18px);
+  --group-bg: rgb(26 33 41 / 0.035);
+  --mesh-a: rgb(0 113 227 / 0.13);
+  --mesh-b: rgb(175 82 222 / 0.12);
+  --mesh-c: rgb(255 55 95 / 0.08);
+  --field-a: rgb(43 65 204 / 0.16);
+  --field-b: rgb(233 166 64 / 0.2);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --bg: #000000;
+    --surface: #1d1d1f;
+    --sunken: #161617;
+    --ink: #f5f5f7;
+    --ink-2: #a1a1a6;
+    --rule: #424245;
+    --auto: #2997ff;
+    --auto-soft: #10243d;
+    --cta: #0071e3;
+    --cta-hover: #0077ed;
+    --cta-ink: #ffffff;
+    --human: #f2b65a;
+    --human-fill: #d9952d;
+    --human-soft: #3b2d17;
+    --shadow: 0 0 0;
+    --on-accent: #000000;
+    --grid-line: #1a1a1c;
+    --glass-bg: rgb(29 29 31 / 0.6);
+    --glass-bg-strong: rgb(29 29 31 / 0.78);
+    --glass-edge: rgb(255 255 255 / 0.08);
+    --glass-border: rgb(255 255 255 / 0.1);
+    --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 10px 30px -10px rgb(0 0 0 / 0.7);
+    --group-bg: rgb(255 255 255 / 0.04);
+    --grain: none;
+    --mesh-a: rgb(41 151 255 / 0.16);
+    --mesh-b: rgb(191 90 242 / 0.14);
+    --mesh-c: rgb(255 55 95 / 0.08);
+    --field-a: rgb(41 151 255 / 0.12);
+    --field-b: rgb(233 166 64 / 0.08);
+  }
+}
+
+/*
+  Dark tiles (the playground): Apple's black product tiles. Engineer mode
+  changes copy only, never colour, so it has no palette of its own.
+*/
+.ink-band {
+  color-scheme: dark;
+  --bg: #000000;
+  --surface: #1d1d1f;
+  --sunken: #161617;
+  --ink: #f5f5f7;
+  --ink-2: #a1a1a6;
+  --rule: #333336;
+  --grid-line: #141416;
+  --auto: #2997ff;
+  --auto-soft: #10243d;
+  --human: #f4ba60;
+  --human-fill: #e9a640;
+  --human-soft: #3d2e14;
+  --shadow: 0 0 0;
+  --on-accent: #000000;
+  --glass-bg: rgb(29 29 31 / 0.7);
+  --glass-bg-strong: rgb(29 29 31 / 0.85);
+  --glass-edge: rgb(255 255 255 / 0.08);
+  --glass-border: rgb(255 255 255 / 0.1);
+  --glass-shadow: 0 1px 1px rgb(0 0 0 / 0.3), 0 10px 30px -10px rgb(0 0 0 / 0.7);
+  --group-bg: rgb(255 255 255 / 0.04);
+  --grain: none;
+  --mesh-a: rgb(41 151 255 / 0.16);
+  --mesh-b: rgb(191 90 242 / 0.14);
+  --mesh-c: rgb(255 55 95 / 0.08);
+  --field-a: rgb(41 151 255 / 0.14);
+  --field-b: rgb(233 166 64 / 0.08);
+}
+
+/* Tone switching. Default mode reads in plain English. */
+.tone-engineer {
+  display: none;
+}
+
+:root[data-mode="engineer"] .tone-engineer {
+  display: revert;
+}
+
+:root[data-mode="engineer"] .tone-plain {
+  display: none;
+}
+
+/*
+  Zero-shift swap: both versions share one grid cell, so the box is always as
+  tall as the longer one and toggling the mode never moves the layout. Hidden
+  copy is visibility:hidden, so it is also out of the accessibility tree.
+*/
+:root .tone-swap {
+  display: grid;
+}
+
+:root .tone-swap > :is(.tone-plain, .tone-engineer) {
+  display: block;
+  grid-area: 1 / 1;
+}
+
+:root .tone-swap > .tone-engineer,
+:root[data-mode="engineer"] .tone-swap > .tone-plain {
+  visibility: hidden;
+}
+
+:root[data-mode="engineer"] .tone-swap > .tone-engineer {
+  visibility: visible;
+}
+
+/* Graph-paper surface used behind the hero and the playground. */
+.graph-paper {
+  background-color: var(--bg);
+  background-image:
+    linear-gradient(var(--grid-line) 1px, transparent 1px),
+    linear-gradient(90deg, var(--grid-line) 1px, transparent 1px);
+  background-size: 32px 32px;
+  background-position: -1px -1px;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+  scroll-padding-top: 5rem;
+}
+
+@media (prefers-reduced-motion: no-preference) {
+  html {
+    scroll-behavior: smooth;
+  }
+}
+
+/* Cross-document page transitions, no JavaScript. */
+@view-transition {
+  navigation: auto;
+}
+
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 220ms;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  ::view-transition-group(*),
+  ::view-transition-old(*),
+  ::view-transition-new(*) {
+    animation: none !important;
+  }
+}
+
+body {
+  margin: 0;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: var(--font-sans);
+  font-size: var(--step-0);
+  line-height: 1.47;
+  letter-spacing: -0.022em;
+  font-optical-sizing: auto;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+}
+
+img,
+svg {
+  display: block;
+  max-width: 100%;
+}
+
+h1,
+h2,
+h3,
+h4 {
+  margin: 0;
+  font-weight: 600;
+  line-height: 1.07;
+  letter-spacing: -0.015em;
+  text-wrap: balance;
+}
+
+p {
+  margin: 0;
+}
+
+ul,
+ol {
+  margin: 0;
+  padding: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration-thickness: 1px;
+  text-underline-offset: 0.2em;
+}
+
+@media (hover: hover) {
+  a:hover {
+    color: var(--auto);
+  }
+}
+
+:focus-visible {
+  outline: 2px solid var(--auto);
+  outline-offset: 3px;
+  border-radius: 2px;
+}
+
+::selection {
+  background: var(--auto-soft);
+  color: var(--ink);
+}
+
+/*
+  Touch. Double-tap-to-zoom is off for controls (no 300ms tap delay) while
+  pinch zoom stays available. Buttons give their own press feedback (scale on
+  :active), so the grey iOS tap flash is replaced; links keep a soft accent
+  flash so a tap is still visibly acknowledged.
+*/
+html {
+  touch-action: manipulation;
+}
+
+a {
+  -webkit-tap-highlight-color: color-mix(in srgb, var(--auto) 14%, transparent);
+}
+
+button,
+summary,
+label,
+[role="tab"],
+.button {
+  -webkit-tap-highlight-color: transparent;
+}
+
+/*
+  Safe areas: with viewport-fit=cover, an iPhone in landscape puts the notch
+  and the rounded corners over the page edges. The gutter grows to clear them.
+*/
+.wrap {
+  width: 100%;
+  max-width: calc(var(--max) + 2 * var(--gutter));
+  margin-inline: auto;
+  padding-left: max(var(--gutter), env(safe-area-inset-left));
+  padding-right: max(var(--gutter), env(safe-area-inset-right));
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.skip-link {
+  position: absolute;
+  left: var(--gutter);
+  top: -100px;
+  z-index: 100;
+  padding: 0.6rem 1rem;
+  background: var(--ink);
+  color: var(--bg);
+  border-radius: var(--radius-s);
+}
+
+.skip-link:focus {
+  top: 0.75rem;
+}
+
+/* Sections share one vertical rhythm. */
+.section {
+  padding-block: clamp(4.5rem, 3rem + 6vw, 9rem);
+}
+
+.section-head {
+  display: grid;
+  justify-items: center;
+  gap: 0.75rem;
+  max-width: 46rem;
+  margin: 0 auto clamp(2.5rem, 1.5rem + 3vw, 4rem);
+  text-align: center;
+}
+
+.section-head h2 {
+  font-size: clamp(2.25rem, 1.4rem + 3vw, 3.5rem);
+  font-weight: 600;
+  letter-spacing: -0.025em;
+  line-height: 1.08;
+}
+
+.section-head p {
+  color: var(--ink-2);
+  font-size: var(--step-1);
+  line-height: 1.45;
+}
+
+/* Text links with a quiet underline that strengthens on hover. */
+.link {
+  color: var(--auto);
+  font-weight: 500;
+  text-decoration-color: color-mix(in srgb, var(--auto) 40%, transparent);
+}
+
+@media (hover: hover) {
+  .link:hover {
+    text-decoration-color: currentColor;
+  }
+}
+
+/* Buttons and button-like links. */
+.button {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+  min-height: 44px;
+  padding: 0.6rem 1.1rem;
+  border: 1px solid var(--cta);
+  border-radius: 999px;
+  background: var(--cta);
+  color: var(--cta-ink);
+  font: inherit;
+  font-size: var(--step-0);
+  font-weight: 500;
+  text-decoration: none;
+  cursor: pointer;
+  transition:
+    background-color 160ms var(--ease),
+    color 160ms var(--ease),
+    border-color 160ms var(--ease),
+    transform 120ms var(--ease);
+}
+
+/* A physical press: every button gives way slightly under the click. */
+.button:active {
+  transform: scale(0.97);
+}
+
+@media (hover: hover) {
+  .button:hover {
+    background: var(--cta-hover);
+    border-color: var(--cta-hover);
+    color: var(--cta-ink);
+  }
+}
+
+.button.quiet {
+  background: transparent;
+  color: var(--auto);
+  border-color: var(--auto);
+}
+
+@media (hover: hover) {
+  .button.quiet:hover {
+    background: var(--auto);
+    border-color: var(--auto);
+    color: var(--cta-ink);
+  }
+}
+
+/*
+  Glass surface. Used sparingly, on things that float above content: the
+  header, the hero stage, the playground steps and the role-fit card.
+*/
+.glass {
+  /* A paper card. Real blur is reserved for the header and the dialog:
+     many blurred elements are a known cause of scroll jank. */
+  background: var(--surface);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+}
+
+/*
+  Grouped list: the recessed, base-layer surface for reference content
+  (experience, education), like a System Settings group. Rows are separated
+  by hairlines inset from the leading edge.
+*/
+.group {
+  --row-pad: clamp(1.1rem, 0.9rem + 0.8vw, 1.6rem);
+  list-style: none;
+  border-radius: var(--radius-m);
+  background: var(--group-bg);
+  box-shadow: inset 0 0 0 1px var(--glass-border);
+}
+
+.group > li {
+  position: relative;
+  padding: var(--row-pad);
+}
+
+.group > li + li::before {
+  content: "";
+  position: absolute;
+  top: 0;
+  left: var(--row-pad);
+  right: 0;
+  border-top: 1px solid var(--rule);
+}
+
+/*
+  Live glass: real backdrop blur over a colour field. Only a handful of
+  large, static panes use it (header, proof pane, dialog) so scrolling
+  stays on the compositor's fast path.
+*/
+.glass-live {
+  background: var(--glass-bg);
+  border: 1px solid var(--glass-border);
+  box-shadow: inset 0 1px 0 var(--glass-edge), var(--glass-shadow);
+  -webkit-backdrop-filter: var(--glass-filter);
+  backdrop-filter: var(--glass-filter);
+}
+
+@supports not ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .glass-live {
+    background: var(--glass-bg-strong);
+  }
+}
+
+/*
+  Mesh field: the soft, static colour wash behind the hero, as on Apple's
+  product pages. Pure gradients, painted once, never animated.
+*/
+.mesh {
+  position: relative;
+  isolation: isolate;
+}
+
+.mesh::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(42rem 30rem at 18% 62%, var(--mesh-a), transparent 68%),
+    radial-gradient(40rem 28rem at 84% 48%, var(--mesh-b), transparent 70%),
+    radial-gradient(34rem 24rem at 52% 96%, var(--mesh-c), transparent 70%);
+}
+
+/* Soft colour fields that give the glass something to frost. */
+.light-field {
+  position: relative;
+  isolation: isolate;
+}
+
+.light-field::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    radial-gradient(38rem 26rem at 78% 30%, var(--field-a), transparent 70%),
+    radial-gradient(28rem 22rem at 62% 82%, var(--field-b), transparent 70%);
+}
+
+/* Long-form reading text. */
+.prose {
+  font-family: var(--font-serif);
+  font-size: 1.1875rem;
+  line-height: 1.62;
+  max-width: var(--measure);
+}
+
+.prose > * + * {
+  margin-top: 1em;
+}
+
+.tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.4rem;
+  list-style: none;
+}
+
+.tags li {
+  padding: 0.2rem 0.65rem;
+  border: 1px solid var(--glass-border);
+  background: var(--glass-bg);
+  border-radius: 999px;
+  font-size: var(--step--1);
+  color: var(--ink-2);
+}
+
+.muted {
+  color: var(--ink-2);
+}
+
+/* Breathing room above the footer, unless the page already ends on a band. */
+main {
+  padding-bottom: clamp(3rem, 2rem + 4vw, 6rem);
+}
+
+main:has(> .band:last-child) {
+  padding-bottom: 0;
+}
+
+
+
+/* Print: just the page content. The résumé page sets its own paper styles. */
+@media print {
+  .site-header,
+  .skip-link,
+  .fit-dock,
+  footer.contact {
+    display: none !important;
+  }
+  body {
+    background: #fff;
+    color: #1d1d1f;
+  }
+}

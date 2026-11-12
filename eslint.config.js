@@ -1,13 +1,13 @@
-import { renovamen } from "@renovamen/eslint-config";
+import tseslint from "typescript-eslint";
+import astro from "eslint-plugin-astro";
 
-const configs = renovamen({
-  files: ["**/*.ts", "**/*.tsx"],
-  rules: {
-    "@typescript-eslint/ban-types": "off",
-    "@typescript-eslint/no-explicit-any": "off",
-    "@typescript-eslint/no-unused-vars": "off",
-    "react/jsx-no-undef": "off"
+export default [
+  { ignores: ["dist/", ".astro/", "node_modules/", "test-results/", "playwright-report/", ".wrangler/"] },
+  ...tseslint.configs.recommended,
+  ...astro.configs.recommended,
+  {
+    rules: {
+      "@typescript-eslint/no-unused-vars": ["error", { argsIgnorePattern: "^_" }]
+    }
   }
-});
-
-export default configs;
+];
