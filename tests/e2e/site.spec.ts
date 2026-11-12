@@ -360,6 +360,27 @@ test.describe("engineer mode layout", () => {
 });
 
 test.describe("hero laptop", () => {
+  test("keys never press by themselves, only when you type", async ({ page, isMobile }) => {
+    test.skip(isMobile, "the keyboard deck is hidden on phones");
+    await page.goto("/");
+    await page.evaluate(() => {
+      const w = window as unknown as { presses: number };
+      w.presses = 0;
+      new MutationObserver((list) => list.forEach((m) => (m.target as Element).classList.contains("down") && w.presses++)).observe(
+        document.querySelector("[data-keyboard]")!,
+        { subtree: true, attributes: true, attributeFilter: ["class"] }
+      );
+    });
+    await page.locator("[data-laptop]").scrollIntoViewIfNeeded();
+    await page.getByRole("tab", { name: "retrieve.py" }).click();
+    await page.waitForTimeout(1500);
+    expect(await page.evaluate(() => (window as unknown as { presses: number }).presses)).toBe(0);
+    await page.getByLabel("Ask the simulated agent, or type help").focus();
+    await page.keyboard.down("KeyH");
+    await expect(page.locator('[data-code="KeyH"]')).toHaveClass(/\bdown\b/);
+    await page.keyboard.up("KeyH");
+  });
+
   test("tabs switch files by click and arrow keys", async ({ page }) => {
     await page.goto("/");
     const tabs = page.getByRole("tablist", { name: "Example files" });

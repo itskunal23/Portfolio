@@ -94,11 +94,19 @@ import { profile } from "~/data/profile";
     min-height: 32px;
   }
 
-  /* The product shot: big, centred, and revealed by scrolling. */
+  /* The product shot: compact and centred, sized like a demo, not a billboard. */
   .stage {
-    max-width: 1040px;
-    margin-top: clamp(2.5rem, 1.5rem + 4vw, 4.5rem);
+    max-width: 760px;
+    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
     text-align: left;
+  }
+
+  /* Tablets: the deck sits a little wider than the screen, so leave it room.
+     Phones show a flat card with no deck and use the full width. */
+  @media (min-width: 641px) {
+    .stage {
+      max-width: min(760px, 86vw);
+    }
   }
 
   @media (prefers-reduced-motion: no-preference) {
@@ -118,21 +126,6 @@ import { profile } from "~/data/profile";
       from {
         opacity: 0;
         transform: translateY(14px);
-      }
-    }
-
-    /* Apple-style scroll reveal: the machine settles forward as it enters.
-       Driven by a CSS view timeline on the compositor; no scroll listeners. */
-    @supports (animation-timeline: view()) {
-      .stage {
-        animation: stage-in linear both;
-        animation-timeline: view();
-        animation-range: entry 0% cover 40%;
-      }
-      @keyframes stage-in {
-        from {
-          transform: perspective(1400px) rotateX(12deg) scale(0.94);
-        }
       }
     }
   }

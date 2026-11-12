@@ -3,9 +3,9 @@
 // full-height function row with Touch ID, Mac modifiers (fn/globe, control,
 // option, command), and inverted-T arrows with half-height keys.
 //
-// It mirrors typing in the hero terminal (each key presses as you type), and
-// clicking keys types into the terminal. Touch ID runs `whoami`, F1 runs
-// `help`, esc clears the line. It's a visual echo of a real, labelled text
+// Keys only move when you do: each key presses as you type in the hero
+// terminal, and clicking keys types into it. Nothing presses by itself.
+// Touch ID runs `whoami`, F1 runs `help`, esc clears the line. It's a visual echo of a real, labelled text
 // field, so it is hidden from assistive tech and never takes focus.
 
 interface Key {
@@ -143,8 +143,6 @@ const rows: Key[][] = [
   if (kb && input) {
     const keys = new Map<string, HTMLElement>();
     for (const el of kb.querySelectorAll<HTMLElement>(".key")) keys.set(el.dataset.code!, el);
-    const byChar = new Map<string, HTMLElement>();
-    for (const el of keys.values()) if (el.dataset.ch) byChar.set(el.dataset.ch, el);
 
     // Press: a class for as long as the key is held, or a short tap.
     const timers = new WeakMap<HTMLElement, number>();
@@ -187,32 +185,6 @@ const rows: Key[][] = [
       else if (el.dataset.ch && input.value.length < input.maxLength) input.value += el.dataset.ch;
       input.focus({ preventScroll: true });
     });
-
-    // While the display's code types itself, the keyboard plays along with
-    // the same characters. Only once on screen, and never with reduced motion.
-    const reduced = window.matchMedia("(prefers-reduced-motion: reduce)");
-    let ghost = 0;
-    const playAlong = (text: string) => {
-      clearInterval(ghost);
-      if (reduced.matches) return;
-      const chars = [...text.toLowerCase()].filter((c) => byChar.has(c));
-      let i = 0;
-      ghost = window.setInterval(() => {
-        if (i >= chars.length || document.activeElement === input) return clearInterval(ghost);
-        tap(byChar.get(chars[i]!), 70);
-        i += 3;
-      }, 33);
-    };
-    const panelText = () => document.querySelector<HTMLElement>("[data-laptop] [role='tabpanel']:not([hidden])")?.textContent ?? "";
-    let seen = false;
-    new IntersectionObserver((entries) => {
-      if (entries[0]?.isIntersecting && !seen) {
-        seen = true;
-        playAlong(panelText());
-      }
-    }).observe(kb);
-    for (const t of document.querySelectorAll("[data-laptop] [role='tab']"))
-      t.addEventListener("click", () => requestAnimationFrame(() => playAlong(panelText())));
   }
 </script>
 
