@@ -60,7 +60,7 @@ const first = terminalRuns[0]!;
           <div class="term-bar">
             <span>terminal</span>
             <button type="button" class="run" data-run>
-              <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
+              <svg viewBox="0 0 16 16" width="11" height="11" aria-hidden="true" focusable="false"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
               <span data-run-label>Run</span>
             </button>
           </div>
@@ -83,7 +83,7 @@ const first = terminalRuns[0]!;
       <div class="trackpad" data-trackpad aria-hidden="true"></div>
     </div>
   </div>
-  <figcaption>Simulated run. Illustrative code and values, not production data.</figcaption>
+  <figcaption>Try it: press Run or ask a question. A simulation of the pattern I build; code and values are illustrative.</figcaption>
   <script type="application/json" data-runs set:html={JSON.stringify(terminalRuns)} />
   <script type="application/json" data-shell set:html={JSON.stringify(shell)} />
 </figure>

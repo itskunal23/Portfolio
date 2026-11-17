@@ -5,7 +5,9 @@
 
 export const profile = {
   name: "Kunal Goenka",
-  headline: "Agentic AI at Boeing. Georgia Tech OMSCS.",
+  // One title everywhere, matching LinkedIn and the résumé: recruiters search
+  // and background checks verify the real title, so it is never paraphrased.
+  headline: "Data Scientist, Enterprise AI & Data at Boeing. Georgia Tech OMSCS.",
   philosophy: "I build software at the intersection of AI systems, design, and how people think.",
   location: "Washington DC–Baltimore Area",
   role: "Data Scientist, Enterprise AI & Data at Boeing",

@@ -288,8 +288,7 @@ test.describe("pipeline playground", () => {
 test.describe("role-fit check", () => {
   test("keyboard users confirm with Next and get a prefilled email", async ({ page }) => {
     await page.goto("/");
-    // The hero button shows at every width; the floating pill hides beside it on phones.
-    await page.getByRole("button", { name: "Check my role fit" }).click();
+    await page.getByRole("button", { name: "Check role fit" }).click();
     const quiz = page.locator("[data-quiz]");
     await expect(quiz).toBeVisible();
     const next = () => quiz.locator("fieldset:not([hidden]) [data-next]");
@@ -313,19 +312,10 @@ test.describe("role-fit check", () => {
 });
 
 test.describe("role-fit dialog", () => {
-  test("on phones, the floating pill steps aside while the hero button is on screen", async ({ page, isMobile }) => {
-    test.skip(!isMobile, "the floating pill only shows below desktop widths");
-    await page.goto("/");
-    const pill = page.getByRole("button", { name: "Role-fit check", exact: true });
-    await expect(pill).toBeHidden();
-    await page.getByRole("heading", { name: "Selected work" }).scrollIntoViewIfNeeded();
-    await expect(pill).toBeVisible();
-  });
-
-  test("opens from the pill, traps focus, and Esc returns focus", async ({ page }) => {
+  test("opens from the footer, traps focus, and Esc returns focus", async ({ page }) => {
     await page.goto("/work/");
-    const pill = page.getByRole("button", { name: "Role-fit check", exact: true });
-    await pill.click();
+    const opener = page.getByRole("button", { name: "Check role fit" });
+    await opener.click();
     const dialog = page.getByRole("dialog", { name: "Role-fit check" });
     await expect(dialog).toBeVisible();
     await expect(page.locator("[data-fit] input").first()).toBeFocused();
@@ -333,15 +323,14 @@ test.describe("role-fit dialog", () => {
     expect(results.violations.map((v) => v.id)).toEqual([]);
     await page.keyboard.press("Escape");
     await expect(dialog).toBeHidden();
-    await expect(pill).toBeFocused();
+    await expect(opener).toBeFocused();
   });
 
-  test("the hero button opens the same dialog", async ({ page }) => {
+  test("stays out of the way: no floating button, nothing in the header or hero", async ({ page }) => {
     await page.goto("/");
-    await page.getByRole("button", { name: "Check my role fit" }).click();
-    await expect(page.getByRole("dialog", { name: "Role-fit check" })).toBeVisible();
-    await page.getByRole("button", { name: "Close role-fit check" }).click();
-    await expect(page.getByRole("dialog")).toBeHidden();
+    await expect(page.locator(".fit-dock")).toHaveCount(0);
+    await expect(page.locator(".site-header [data-fit-open]")).toHaveCount(0);
+    await expect(page.locator(".hero [data-fit-open]")).toHaveCount(0);
   });
 });
 
@@ -356,6 +345,22 @@ test.describe("engineer mode layout", () => {
     await expect(metric.locator(".tone-engineer")).toBeVisible();
     await expect(metric.locator(".tone-engineer")).toContainText("P95 retrieval latency");
     expect(await height()).toBe(before);
+  });
+});
+
+test.describe("hero", () => {
+  test("says who and what role, leads with proof, and offers exactly two next steps", async ({ page }) => {
+    await page.goto("/");
+    const hero = page.locator(".hero .copy");
+    await expect(hero.getByText("Kunal Goenka", { exact: true })).toBeVisible();
+    await expect(hero.getByText("Data Scientist, Enterprise AI & Data at Boeing")).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("I build agentic AI systems at Boeing.");
+    await expect(hero.locator(".actions").getByRole("link")).toHaveText(["See my work", "Résumé"]);
+    await expect(hero.locator("a, button")).toHaveCount(2);
+    const proofTop = await page.getByRole("region", { name: "Results at a glance" }).evaluate((e) => e.getBoundingClientRect().top);
+    const laptopTop = await page.locator("[data-laptop]").evaluate((e) => e.getBoundingClientRect().top);
+    expect(proofTop).toBeLessThan(laptopTop);
+    await expect(page).toHaveTitle("Kunal Goenka | Data Scientist, Enterprise AI & Data at Boeing");
   });
 });
 
@@ -439,19 +444,23 @@ test.describe("interactive résumé", () => {
     await page.goto("/");
     await page.locator(".hero").getByRole("link", { name: "Résumé", exact: true }).click();
     await expect(page).toHaveURL(/\/resume\/$/);
-    await page.getByRole("button", { name: "Skip typing" }).click();
     const text = (await page.locator("[data-resume]").innerText()) + (await page.content());
     expect(text).not.toMatch(/\d{3}[-.\s]\d{3}[-.\s]\d{4}/);
     await expect(page.getByRole("link", { name: "Download PDF" })).toHaveAttribute("href", "/files/kunal-goenka-resume.pdf");
   });
 
-  test("types itself out, and Skip typing reveals everything", async ({ page }) => {
+  test("shows everything at once; Replay types it out, and Skip reveals it again", async ({ page }) => {
     await page.goto("/resume/");
     const front = page.getByRole("article", { name: "Résumé, experience" });
+    // Instant by default: no typing, no caret, nothing waiting to appear.
     await expect(front.getByText("Kunal Goenka", { exact: true })).toBeVisible();
-    // Typing is under way: the caret is showing.
+    await expect(front.locator(".caret")).toHaveCount(0);
+    expect(await page.evaluate(() => document.querySelector("[data-resume]")!.classList.contains("tw"))).toBe(false);
+    await page.getByRole("button", { name: "Replay typing" }).click();
     await expect(front.locator(".caret")).toBeVisible();
+    await expect(page.getByRole("button", { name: "Replay typing" })).toBeHidden();
     await page.getByRole("button", { name: "Skip typing" }).click();
+    await expect(page.getByRole("button", { name: "Replay typing" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Skip typing" })).toBeHidden();
     await expect(front.locator(".caret")).toBeHidden();
     expect(await page.evaluate(() => CSS.highlights.get("tw-untyped")?.size ?? 0)).toBe(0);
@@ -477,6 +486,7 @@ test.describe("interactive résumé", () => {
     await expect(page.getByRole("heading", { name: "Experience", exact: true })).toBeVisible();
     await expect(page.getByRole("heading", { name: "Education" })).toBeVisible();
     await expect(page.getByRole("button", { name: "Skip typing" })).toBeHidden();
+    await expect(page.getByRole("button", { name: "Replay typing" })).toBeHidden();
     await expect(page.getByRole("button", { name: "Education and skills" })).toBeHidden();
     await ctx.close();
   });

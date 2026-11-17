@@ -355,6 +355,9 @@ label,
 /* Sections share one vertical rhythm. */
 .section {
   padding-block: clamp(4.5rem, 3rem + 6vw, 9rem);
+  /* Skip paint/layout for off-screen sections; browser handles IntersectionObserver internally. */
+  content-visibility: auto;
+  contain-intrinsic-size: 0 1000px;
 }
 
 .section-head {
@@ -585,7 +588,6 @@ main:has(> .band:last-child) {
 @media print {
   .site-header,
   .skip-link,
-  .fit-dock,
   footer.contact {
     display: none !important;
   }

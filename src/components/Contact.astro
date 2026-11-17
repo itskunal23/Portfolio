@@ -12,6 +12,12 @@ const year = new Date().getFullYear();
           I'm interested in AI engineering and software engineering roles where I can build intelligent features into
           real products, from the backend systems and AI architecture to the applications people use.
         </p>
+        <!-- The role-fit check lives here, where hiring intent already is,
+             instead of competing for attention at the top of every page. -->
+        <p class="fit">
+          <span>Hiring? See how your role maps to my shipped work in three questions.</span>
+          <button type="button" class="fit-open" data-fit-open aria-haspopup="dialog">Check role fit</button>
+        </p>
       </div>
       <div class="channels">
         <div class="email">
@@ -89,6 +95,43 @@ const year = new Date().getFullYear();
     font-size: var(--step-1);
     line-height: 1.45;
     color: color-mix(in srgb, var(--c-fg) 78%, var(--c-bg));
+  }
+
+  /* The role-fit opener: one quiet row under the pitch. */
+  .lead .fit {
+    display: flex;
+    flex-wrap: wrap;
+    align-items: center;
+    gap: 0.75rem 1rem;
+    margin-top: 1.75rem;
+    font-size: var(--step--1);
+  }
+
+  .fit-open {
+    min-height: 44px;
+    padding: 0.4rem 1rem;
+    border: 0;
+    border-radius: 999px;
+    background: var(--human-fill);
+    color: #1d1d1f;
+    font: inherit;
+    font-weight: 600;
+    cursor: pointer;
+    transition: transform 120ms var(--ease), filter 160ms var(--ease);
+  }
+
+  @media (hover: hover) {
+    .fit-open:hover {
+      filter: brightness(1.06);
+    }
+  }
+
+  .fit-open:active {
+    transform: scale(0.97);
+  }
+
+  .fit-open:focus-visible {
+    outline-color: var(--human-fill);
   }
 
   .email {

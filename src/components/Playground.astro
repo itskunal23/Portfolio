@@ -21,7 +21,7 @@ import { steps, wires, runs, wideLayout, narrowLayout } from "~/data/playground"
 
     <div class="toolbar">
       <button type="button" class="button run" data-run>
-        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
+        <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M4 2.5v11l9-5.5z" fill="currentColor"></path></svg>
         <span data-run-label>Run a request</span>
       </button>
       <button type="button" class="button quiet" data-reset>Reset layout</button>
@@ -29,7 +29,7 @@ import { steps, wires, runs, wideLayout, narrowLayout } from "~/data/playground"
     </div>
 
     <div class="board graph-paper" data-board>
-      <svg class="wires" aria-hidden="true">
+      <svg class="wires" aria-hidden="true" focusable="false">
         {
           wires.map((w) => (
             <g data-wire={`${w.from}>${w.to}`} class:list={["wire", w.human && "human"]}>

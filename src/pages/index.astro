@@ -14,8 +14,10 @@ const gt = education[0];
 
 <Base path="/">
   <div class="mesh">
-    <Hero />
-    <ProofStrip />
+    <!-- Proof before the demo: outcomes are what a recruiter scans for first. -->
+    <Hero>
+      <ProofStrip />
+    </Hero>
   </div>
 
   <section id="work" class="section work" aria-labelledby="work-title">
@@ -29,8 +31,6 @@ const gt = education[0];
     </div>
   </section>
 
-  <Playground />
-
   <section class="section career" aria-labelledby="career-title">
     <div class="wrap">
       <div class="section-head row">
@@ -40,6 +40,10 @@ const gt = education[0];
       <CareerTable />
     </div>
   </section>
+
+  <!-- The hands-on demo comes after the work and experience a recruiter came
+       for, so it rewards curiosity instead of standing in the way. -->
+  <Playground />
 
   <section class="section study band" aria-labelledby="study-title">
     <div class="wrap study-grid">

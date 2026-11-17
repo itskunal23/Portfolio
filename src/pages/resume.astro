@@ -17,6 +17,12 @@ const range = (a: string, b: string) => `${a} to ${b}`;
 >
   <div class="desk" data-resume>
     <div class="wrap top">
+      <nav class="crumbs" aria-label="Breadcrumb">
+        <ol>
+          <li><a href="/">Home</a></li>
+          <li aria-current="page">Résumé</li>
+        </ol>
+      </nav>
       <h1>Résumé</h1>
       <div class="controls" role="group" aria-label="Résumé controls">
         <div class="segments" role="group" aria-label="Side of the page" hidden>
@@ -24,6 +30,7 @@ const range = (a: string, b: string) => `${a} to ${b}`;
           <button type="button" data-side="back" aria-pressed="false">Education and skills</button>
         </div>
         <button type="button" class="ghost" data-skip hidden>Skip typing</button>
+        <button type="button" class="ghost" data-replay hidden>Replay typing</button>
         <a class="button" href={profile.links.resume} download>Download PDF</a>
       </div>
     </div>
@@ -142,9 +149,10 @@ const range = (a: string, b: string) => `${a} to ${b}`;
         const r = document.currentScript.parentElement;
         r.querySelector('[data-face="back"]').hidden = true;
         r.querySelector(".segments").hidden = false;
+        // Everything shows at once: recruiters scan, they don't wait. The
+        // typewriter is an opt-in replay where the browser supports it.
         if (window.CSS && CSS.highlights && !matchMedia("(prefers-reduced-motion: reduce)").matches) {
-          r.classList.add("tw");
-          r.querySelector("[data-skip]").hidden = false;
+          r.querySelector("[data-replay]").hidden = false;
         }
       })();
     </script>
@@ -158,13 +166,15 @@ const range = (a: string, b: string) => `${a} to ${b}`;
   const root = document.querySelector<HTMLElement>("[data-resume]");
   if (root) {
     const reduce = window.matchMedia("(prefers-reduced-motion: reduce)").matches;
-    const typing = root.classList.contains("tw");
+    let typing = false;
+    const canType = Boolean(window.CSS && CSS.highlights) && !reduce;
     const sheet = root.querySelector<HTMLElement>("[data-sheet]")!;
     const faces = {
       front: root.querySelector<HTMLElement>('[data-face="front"]')!,
       back: root.querySelector<HTMLElement>('[data-face="back"]')!
     };
     const skip = root.querySelector<HTMLButtonElement>("[data-skip]")!;
+    const replay = root.querySelector<HTMLButtonElement>("[data-replay]")!;
     let side: "front" | "back" = "front";
 
     interface Line {
@@ -185,8 +195,7 @@ const range = (a: string, b: string) => `${a} to ${b}`;
       for (const el of faces[face].querySelectorAll<HTMLElement>("[data-type-group]"))
         groups.push({ face, el, lines: null, state: "idle" });
 
-    const hidden = typing ? new Highlight() : null;
-    if (hidden) CSS.highlights.set("tw-untyped", hidden);
+    let hidden: Highlight | null = null;
 
     // One caret per side, moved with a transform to the end of the typed text.
     const carets = new Map<HTMLElement, HTMLElement>();
@@ -261,7 +270,9 @@ const range = (a: string, b: string) => `${a} to ${b}`;
       }
       for (const c of carets.values()) c.hidden = true;
       root.classList.remove("tw");
+      typing = false;
       skip.hidden = true;
+      replay.hidden = !canType;
     };
 
     // One rAF loop types the queued sections in order, line by line.
@@ -298,12 +309,12 @@ const range = (a: string, b: string) => `${a} to ${b}`;
       if (current || queue.length) raf = requestAnimationFrame(tick);
       else {
         for (const c of carets.values()) c.hidden = true;
-        if (groups.every((x) => x.state === "done")) skip.hidden = true;
+        if (groups.every((x) => x.state === "done")) finishAll();
       }
     };
 
     const enqueue = (g: Group) => {
-      if (g.state !== "idle" || g.face !== side) return;
+      if (!typing || g.state !== "idle" || g.face !== side) return;
       if (!g.lines) prepare(g);
       g.state = "queued";
       queue.push(g);
@@ -317,25 +328,43 @@ const range = (a: string, b: string) => `${a} to ${b}`;
       }
     };
 
-    if (typing) {
-      // Each section types itself as it scrolls into view.
-      const io = new IntersectionObserver(
-        (entries) => {
-          for (const e of entries) {
-            if (!e.isIntersecting) continue;
-            const g = groups.find((x) => x.el === e.target);
-            if (g) enqueue(g);
-          }
-        },
-        { rootMargin: "0px 0px -10% 0px" }
-      );
-      groups.forEach((g) => io.observe(g.el));
-      skip.addEventListener("click", finishAll);
-      // Printing (or saving as PDF) always gets the whole page.
-      window.addEventListener("beforeprint", finishAll);
-    } else {
-      skip.hidden = true;
-    }
+    // Each section types itself as it scrolls into view, during a replay.
+    const io = new IntersectionObserver(
+      (entries) => {
+        for (const e of entries) {
+          if (!e.isIntersecting) continue;
+          const g = groups.find((x) => x.el === e.target);
+          if (g) enqueue(g);
+        }
+      },
+      { rootMargin: "0px 0px -10% 0px" }
+    );
+    groups.forEach((g) => io.observe(g.el));
+
+    // Replay: hide the text again and type it out, starting with what is on screen.
+    const startTyping = () => {
+      if (!canType) return;
+      hidden = new Highlight();
+      CSS.highlights.set("tw-untyped", hidden);
+      for (const el of root.querySelectorAll(".tw-ready")) el.classList.remove("tw-ready");
+      for (const g of groups) {
+        g.lines = null;
+        g.state = "idle";
+      }
+      root.classList.add("tw");
+      typing = true;
+      replay.hidden = true;
+      skip.hidden = false;
+      enqueueVisible();
+      skip.focus();
+    };
+    replay.addEventListener("click", startTyping);
+    skip.addEventListener("click", () => {
+      finishAll();
+      replay.focus();
+    });
+    // Printing (or saving as PDF) always gets the whole page.
+    window.addEventListener("beforeprint", finishAll);
 
     // Turn the page: the sheet swings edge-on, the sides swap, and it swings
     // back. Only the side that is showing is in the document's flow.
@@ -403,6 +432,44 @@ const range = (a: string, b: string) => `${a} to ${b}`;
     --paper-link: #0066cc;
     padding-block: clamp(2rem, 1.5rem + 2vw, 3.5rem) clamp(4rem, 3rem + 4vw, 7rem);
     background: var(--sunken);
+  }
+
+  .crumbs {
+    margin-bottom: 0.5rem;
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .crumbs li + li::before {
+    content: "/";
+    color: var(--ink-2);
+  }
+
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding-inline: 0.25rem;
+    text-decoration: none;
+  }
+
+  @media (hover: hover) {
+    .crumbs a:hover {
+      color: var(--auto);
+    }
+  }
+
+  .crumbs [aria-current="page"] {
+    color: var(--ink);
+    pointer-events: none;
   }
 
   .top {

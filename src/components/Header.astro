@@ -18,7 +18,7 @@ const isCurrent = (href: string) => !href.includes("#") && path.startsWith(href)
 <header class="site-header">
   <div class="wrap bar">
     <a class="mark" href="/" aria-current={path === "/" ? "page" : undefined}>
-      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" width="22" height="22">
+      <svg class="glyph" viewBox="0 0 24 24" aria-hidden="true" width="22" height="22" focusable="false">
         <circle cx="4" cy="12" r="3"></circle>
         <circle cx="20" cy="5" r="3"></circle>
         <circle cx="20" cy="19" r="3" class="h"></circle>
@@ -39,17 +39,16 @@ const isCurrent = (href: string) => !href.includes("#") && path.startsWith(href)
         }
       </ul>
     </nav>
-    <button class="fit-nav" type="button" data-fit-open aria-haspopup="dialog">Role-fit check</button>
-    <button class="mode" type="button" data-mode-toggle aria-pressed="false" title="Switch the copy to technical detail">
+    <button class="mode" type="button" data-mode-toggle aria-pressed="false" title="Show the technical version of the copy">
       <span class="switch" aria-hidden="true"><span></span></span>
-      <span>Engineer mode</span>
+      <span>Technical detail</span>
     </button>
   </div>
   <span class="scroll-progress" aria-hidden="true"></span>
 </header>
 
 <script>
-  // Engineer mode: technical copy and a darker palette. The choice is a
+  // Technical detail ("engineer mode" in code): swaps plain copy for technical copy. The choice is a
   // per-visitor convenience, so it lives in localStorage (guarded).
   const root = document.documentElement;
   for (const btn of document.querySelectorAll<HTMLButtonElement>("[data-mode-toggle]")) {
@@ -66,6 +65,23 @@ const isCurrent = (href: string) => !href.includes("#") && path.startsWith(href)
       sync();
       window.dispatchEvent(new CustomEvent("modechange", { detail: next }));
     });
+  }
+
+  // Prefetch on hover/focus for instant navigation
+  if ('prefetch' in document.createElement('link')) {
+    const prefetched = new Set<string>();
+    const prefetch = (href: string) => {
+      if (prefetched.has(href)) return;
+      const link = document.createElement('link');
+      link.rel = 'prefetch';
+      link.href = href;
+      document.head.append(link);
+      prefetched.add(href);
+    };
+    for (const a of document.querySelectorAll<HTMLAnchorElement>('nav a[href]')) {
+      a.addEventListener('mouseenter', () => prefetch(a.href), { once: true });
+      a.addEventListener('focus', () => prefetch(a.href), { once: true });
+    }
   }
 </script>
 
@@ -106,40 +122,6 @@ const isCurrent = (href: string) => !href.includes("#") && path.startsWith(href)
       to {
         transform: scaleX(1);
       }
-    }
-  }
-
-  /* Wide screens: the role-fit check lives in the sticky header. Narrower
-     screens use the floating button instead (see RoleFit.astro). */
-  .fit-nav {
-    display: none;
-    min-height: 44px;
-    padding: 0.35rem 1rem;
-    border: 1px solid var(--auto);
-    border-radius: 999px;
-    background: var(--auto);
-    color: var(--on-accent);
-    font: inherit;
-    font-size: var(--step--1);
-    font-weight: 600;
-    cursor: pointer;
-    transition: transform 120ms var(--ease), filter 120ms var(--ease);
-  }
-
-  @media (hover: hover) {
-    .fit-nav:hover {
-      filter: brightness(1.08);
-    }
-  }
-
-  .fit-nav:active {
-    transform: scale(0.96);
-  }
-
-  @media (min-width: 1101px) {
-    .fit-nav {
-      display: inline-flex;
-      align-items: center;
     }
   }
 
