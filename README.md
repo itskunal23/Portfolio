@@ -1,80 +1,70 @@
-# Kunal Goenka
+# Portfolio
 
-The personal portfolio of **Kunal Goenka**, a Data Scientist working on agentic AI at Boeing and an MS Computer Science (AI) student at Georgia Tech.
+Personal portfolio built with Astro + TypeScript + Tailwind. Showcases agentic AI work, MCP integrations, and OMSCS journey.
 
-> I build software at the intersection of AI systems, design, and how people think.
+## Problem
+As an AI Engineer specializing in agentic workflows and MCP, I needed a professional portfolio that demonstrates technical depth while reflecting my design sensibility. Existing templates felt generic and didn't showcase the specific work I do.
 
-- **Site:** [kunalgoenka.com](https://kunalgoenka.com)
-- **LinkedIn:** [linkedin.com/in/kunalgoenka23](https://www.linkedin.com/in/kunalgoenka23/)
-- **GitHub:** [github.com/itskunal23](https://github.com/itskunal23)
-- **Email:** [k.goenka23@gmail.com](mailto:k.goenka23@gmail.com)
+## Solution
+A custom-built portfolio using Astro (static site generation), TypeScript (type safety), and Tailwind (utility-first styling). Features an Apple-inspired design system, dark/light mode, and sections for projects, writing, and technical expertise.
 
-Designed, written, and built by Kunal Goenka. This is an original project, not a fork or a template.
+## Tech Stack
+- **Framework**: Astro 5.x (islands architecture, zero-JS by default)
+- **Language**: TypeScript 5.x (strict mode)
+- **Styling**: Tailwind CSS 3.x + custom design tokens
+- **Deployment**: Vercel (edge functions, automatic HTTPS)
+- **Analytics**: Vercel Analytics + Speed Insights
+- **Fonts**: System font stack (SF Pro / Inter fallback)
 
-## Design
+## Demo
+**Live**: https://kunal-goenka-portfolio.vercel.app/
+**Custom Domain**: https://kunalgoenka.com/
 
-The site is built around one idea: **execution graphs**. Kunal's work is about explicit paths through AI systems and the moments a system hands off to a person. So every project is presented as an interactive graph of how it works. You can select a step to read what it does, or trace a request through the system.
+## Installation
+```bash
+git clone https://github.com/itskunal23/Portfolio.git
+cd Portfolio
+npm install
+npm run dev
+```
 
-- **Color carries meaning.** Cobalt marks automated paths and links. Amber marks the steps where a person makes the call.
-- **Depth, without WebGL.** The home page sets the same graph on a tilted plane with real CSS 3D depth. Steps lift off the plane as a request passes through, and the plane follows the cursor slightly on desktop.
-- **One component everywhere.** The hero, all eight case studies, and the small "fingerprint" glyphs in project lists come from the same graph data. On narrow screens the graph turns 90 degrees and reads top to bottom.
-- **Type:** Schibsted Grotesk for interface and headings, Newsreader for long-form reading.
+## Usage
+```bash
+# Development server
+npm run dev
 
-## Stack
+# Production build
+npm run build
 
-| | |
-| --- | --- |
-| Framework | [Astro 5](https://astro.build), fully static output |
-| Client JavaScript | About 2 kB of vanilla TypeScript; no UI framework ships to the browser |
-| Styling | Hand-written CSS with design tokens, container queries, and native cross-document view transitions |
-| Fonts | Self-hosted variable fonts from [Fontsource](https://fontsource.org) |
-| Hosting | Cloudflare Workers Static Assets ([wrangler.jsonc](wrangler.jsonc)) |
-| Tests | Vitest (content integrity and accuracy), Playwright and axe-core (browser, accessibility, layout, links) |
+# Preview production build
+npm run preview
 
-## Project structure
+# Type checking
+npm run check
+```
 
+## Architecture
 ```
 src/
-  data/         All content, typed: profile, experience, projects, expertise, education
-  components/   Graph (interactive execution graph), Hero, Glyph, ProjectList, Header, Contact
-  layouts/      Base layout: metadata, Open Graph, JSON-LD, fonts
-  pages/        Home, Work, Work/[slug], Experience, About, 404, sitemap.xml, robots.txt
-  styles/       Global tokens and base styles
-tests/
-  unit/         Graph integrity, cross-references, and factual-accuracy guards
-  e2e/          Navigation, interaction, accessibility, responsive layout, broken links
-scripts/        Screenshot, Lighthouse, layout-cost, and Open Graph image helpers
+├── components/       # Reusable UI components (Button, Card, Section, etc.)
+├── layouts/          # Page layouts (BaseLayout, BlogLayout)
+├── pages/            # File-based routing (index.astro, blog/[slug].astro)
+├── styles/           # Global styles, Tailwind imports
+├── content/          # Content collections (blog posts, projects)
+├── utils/            # Helper functions (date formatting, etc.)
+└── config/           # Site config, navigation, social links
 ```
 
-Content accuracy is documented in [CONTENT_SOURCES.md](CONTENT_SOURCES.md). LinkedIn is the source of truth, and every reconciliation with older material is recorded there.
+## Key Features
+- **Apple-inspired design** — Custom color tokens (#0071E3, #1D1D1F), SF Pro typography
+- **Dark/Light mode** — System preference detection + manual toggle with persistence
+- **Content collections** — Type-safe blog posts and project entries via Astro content layer
+- **Responsive** — Mobile-first, tested at 320px, 768px, 1024px, 1440px
+- **Accessible** — Semantic HTML, ARIA labels, focus management, WCAG AA contrast
+- **Performance** — Static generation, optimized images, minimal JS (< 10KB)
 
-## Development
-
-Requires Node 22 and pnpm 9.
-
-```bash
-pnpm install
-pnpm dev            # local dev server
-pnpm build          # astro check (types) + static build to dist/
-pnpm lint
-pnpm test           # unit tests (run after build to also scan the built HTML)
-pnpm test:e2e       # Playwright; serves dist/ with astro preview
-```
-
-## Deployment
-
-Cloudflare builds the site with `pnpm run build` and deploys it with `npx wrangler deploy`, which uploads `dist/` as static assets. Unknown paths return the generated `404.html` with a real 404 status.
-
-## Confidentiality
-
-Case studies for Boeing work are generalized descriptions. The diagrams illustrate an approach, not an internal design. No proprietary source code, data, documents, or internal details appear anywhere in this repository.
-
-## History and attribution
-
-Version 1 of this site (before November 2026) was a macOS-style desktop adapted from the MIT-licensed [playground-macos](https://github.com/Renovamen/playground-macos) template by Renovamen. Version 2 is a ground-up rebuild: none of that template's code, components, or assets remain. That earlier history is preserved in git.
-
-Third-party software and fonts: Astro (MIT); Schibsted Grotesk and Newsreader (SIL Open Font License 1.1), distributed via Fontsource.
+## Contributing
+PRs welcome for typo fixes, accessibility improvements, or design system enhancements. See [CONTRIBUTING.md](CONTRIBUTING.md).
 
 ## License
-
-Code is MIT licensed (see [LICENSE](LICENSE)). The written content, case studies, and portrait are © Kunal Goenka and are not covered by the code license.
+MIT © Kunal Goenka
