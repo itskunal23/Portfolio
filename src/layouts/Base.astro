@@ -16,7 +16,7 @@ interface Props {
 }
 
 const { title, description = profile.description, path, schema = [], noindex = false } = Astro.props;
-const fullTitle = title ? `${title} | Kunal Goenka` : "Kunal Goenka | Agentic AI engineer at Boeing";
+const fullTitle = title ? `${title} | Kunal Goenka` : "Kunal Goenka | Data Scientist, Enterprise AI & Data at Boeing";
 const canonical = new URL(path, Astro.site).toString();
 const ogImage = new URL("/og.png", Astro.site).toString();
 
@@ -95,6 +95,15 @@ const person = {
       // iOS Safari only applies :active (the press-down feedback on buttons)
       // when a touch listener exists. A passive no-op listener costs nothing.
       document.addEventListener("touchstart", () => {}, { passive: true });
+
+      // Register Service Worker for offline support
+      if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+          navigator.serviceWorker.register('/sw.js').catch(() => {
+            // SW registration failed; offline support unavailable
+          });
+        });
+      }
     </script>
   </body>
 </html>

@@ -3,13 +3,6 @@ import { questions } from "~/data/rolefit";
 import { profile } from "~/data/profile";
 ---
 
-<aside class="fit-dock" aria-label="Role-fit check">
-  <button type="button" class="fit-pill" data-fit-open aria-haspopup="dialog">
-    <svg viewBox="0 0 16 16" width="15" height="15" aria-hidden="true"><path d="M2 8h3l2-4 2 8 2-4h3" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"></path></svg>
-    <span class="pill-label">Role-fit check</span>
-  </button>
-</aside>
-
 <dialog class="fit-sheet" aria-labelledby="fit-title" data-fit>
   <header class="sheet-head">
     <div>
@@ -17,7 +10,7 @@ import { profile } from "~/data/profile";
       <p class="muted">Three questions. You get the parts of my work that match, with links to the evidence. Nothing is stored or sent.</p>
     </div>
     <button type="button" class="close" data-fit-close aria-label="Close role-fit check">
-      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
+      <svg viewBox="0 0 16 16" width="14" height="14" aria-hidden="true" focusable="false"><path d="M4 4l8 8M12 4l-8 8" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"></path></svg>
     </button>
   </header>
 
@@ -89,25 +82,6 @@ import { profile } from "~/data/profile";
       if (!inside) root.close();
     });
     root.addEventListener("close", () => (returnTo ?? opener)?.focus());
-
-    // The floating pill steps aside while another role-fit button is already
-    // on screen (the hero's), so the two never stack over each other.
-    const dock = document.querySelector<HTMLElement>(".fit-dock");
-    const others = [...document.querySelectorAll<HTMLElement>("[data-fit-open]")].filter((b) => !b.closest(".fit-dock"));
-    if (dock && others.length && "IntersectionObserver" in window) {
-      const onScreen = new Set<Element>();
-      const io = new IntersectionObserver((entries) => {
-        for (const e of entries) {
-          // A zero-size box is a button hidden at this width (the header's).
-          if (e.isIntersecting && e.boundingClientRect.width > 0) onScreen.add(e.target);
-          else onScreen.delete(e.target);
-        }
-        const tucked = onScreen.size > 0;
-        dock.classList.toggle("is-tucked", tucked);
-        dock.inert = tucked;
-      });
-      others.forEach((b) => io.observe(b));
-    }
 
     const questions = JSON.parse(root.querySelector("[data-fit-data]")!.textContent!) as FitQuestion[];
     const form = root.querySelector<HTMLFormElement>("[data-quiz]")!;
@@ -189,80 +163,6 @@ import { profile } from "~/data/profile";
 </script>
 
 <style>
-  /* Floating utility layer: a pill pinned to the corner of every page. */
-  .fit-dock {
-    position: fixed;
-    right: max(16px, env(safe-area-inset-right));
-    bottom: max(16px, env(safe-area-inset-bottom));
-    z-index: var(--z-sticky);
-  }
-
-  .fit-dock {
-    transition:
-      opacity 200ms var(--ease),
-      transform 200ms var(--ease),
-      visibility 0s linear 0s;
-  }
-
-  .fit-dock.is-tucked {
-    opacity: 0;
-    transform: translateY(8px) scale(0.96);
-    visibility: hidden;
-    transition:
-      opacity 200ms var(--ease),
-      transform 200ms var(--ease),
-      visibility 0s linear 200ms;
-  }
-
-  @media (prefers-reduced-motion: reduce) {
-    .fit-dock,
-    .fit-dock.is-tucked {
-      transition: none;
-    }
-  }
-
-  @media (min-width: 1101px) {
-    .fit-dock {
-      display: none;
-    }
-  }
-
-  .fit-pill {
-    display: inline-flex;
-    align-items: center;
-    gap: 0.5rem;
-    min-height: 44px;
-    padding: 0.55rem 1.05rem 0.55rem 0.9rem;
-    border: 1px solid var(--glass-border);
-    border-radius: 999px;
-    background: var(--glass-bg-strong);
-    box-shadow: inset 0 1px 0 var(--glass-edge), 0 10px 30px -10px rgb(var(--shadow) / 0.35);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
-    color: var(--ink);
-    font: inherit;
-    font-size: var(--step--1);
-    font-weight: 600;
-    cursor: pointer;
-    transition:
-      transform 160ms var(--ease),
-      border-color 160ms var(--ease);
-  }
-
-  .fit-pill svg {
-    color: var(--auto);
-  }
-
-  @media (hover: hover) {
-    .fit-pill:hover {
-      border-color: var(--ink-2);
-    }
-  }
-
-  .fit-pill:active {
-    transform: scale(0.97);
-  }
-
   /* The sheet: a native modal dialog, styled like a macOS sheet. */
   .fit-sheet {
     width: min(40rem, calc(100vw - 32px));
@@ -270,10 +170,9 @@ import { profile } from "~/data/profile";
     padding: clamp(1.25rem, 1rem + 1.5vw, 2rem);
     border: 1px solid var(--glass-border);
     border-radius: var(--radius-l);
-    background: var(--glass-bg-strong);
+    /* Solid background ensures text contrast regardless of backdrop. */
+    background: var(--surface);
     box-shadow: inset 0 1px 0 var(--glass-edge), 0 30px 80px -20px rgb(var(--shadow) / 0.45);
-    -webkit-backdrop-filter: var(--glass-filter);
-    backdrop-filter: var(--glass-filter);
     color: var(--ink);
     overflow-y: auto;
     overscroll-behavior: contain;
@@ -326,13 +225,13 @@ import { profile } from "~/data/profile";
     border: 0;
     border-radius: 50%;
     background: var(--sunken);
-    color: var(--ink-2);
+    color: var(--ink);
     cursor: pointer;
   }
 
   @media (hover: hover) {
     .close:hover {
-      color: var(--ink);
+      background: var(--rule);
     }
   }
 
@@ -495,25 +394,6 @@ import { profile } from "~/data/profile";
 
 
   @media (max-width: 640px) {
-    /* Icon-only on phones so it covers as little text as possible. */
-    .fit-pill {
-      width: 48px;
-      height: 48px;
-      padding: 0;
-      justify-content: center;
-    }
-    .fit-pill svg {
-      width: 20px;
-      height: 20px;
-    }
-    .pill-label {
-      position: absolute;
-      width: 1px;
-      height: 1px;
-      overflow: hidden;
-      clip-path: inset(50%);
-      white-space: nowrap;
-    }
     .fit-sheet {
       width: 100vw;
       max-width: none;

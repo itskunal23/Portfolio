@@ -10,6 +10,12 @@ import { projectBySlug } from "~/data/projects";
   description="Kunal Goenka's experience: Data Scientist at Boeing in Enterprise AI & Data and ELORA, Boeing Supplier Quality intern, and Virginia Tech Tech Fellows Technology Analyst."
 >
   <div class="wrap page-head">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">Experience</li>
+      </ol>
+    </nav>
     <h1>Experience</h1>
     <p>Roles, dates, and responsibilities as they appear on my LinkedIn profile, with links to the case studies behind them.</p>
   </div>
@@ -93,6 +99,44 @@ import { projectBySlug } from "~/data/projects";
     font-size: var(--step-1);
     line-height: 1.45;
     color: var(--ink-2);
+  }
+
+  .crumbs {
+    margin-bottom: 0.5rem;
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .crumbs li + li::before {
+    content: "/";
+    color: var(--ink-2);
+  }
+
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding-inline: 0.25rem;
+    text-decoration: none;
+  }
+
+  @media (hover: hover) {
+    .crumbs a:hover {
+      color: var(--auto);
+    }
+  }
+
+  .crumbs [aria-current="page"] {
+    color: var(--ink);
+    pointer-events: none;
   }
 
   .employer {

@@ -1,20 +1,30 @@
 ---
+import { Image } from "astro:assets";
 import Laptop from "./Laptop.astro";
+import portrait from "~/assets/kunal-goenka.jpg";
 import { profile } from "~/data/profile";
 ---
 
+<!--
+  Read order is the recruiter's question order: who (face, name, title),
+  what (one plain headline), why it matters (the philosophy and a short
+  intro), then two clear next steps. Proof (the slot) comes before the demo.
+-->
 <section class="hero" aria-labelledby="hero-title">
   <div class="wrap copy">
-    <p class="eyebrow">Kunal Goenka, Agentic AI at Boeing</p>
-    <h1 id="hero-title">
-      <span>Plan the request.</span>
-      <span>Ground the answer.</span>
-      <span>Know when to ask a person.</span>
-    </h1>
+    <div class="who">
+      <Image class="avatar" src={portrait} alt="" width={112} height={112} loading="eager" fetchpriority="high" />
+      <p class="identity">
+        <span class="name">{profile.name}</span>
+        <span class="role">{profile.role}</span>
+      </p>
+    </div>
+    <h1 id="hero-title">I build agentic AI systems at Boeing.</h1>
+    <p class="tagline">Plan the request. Ground the answer. Know when to ask a person.</p>
     <p class="intro tone-swap">
       <span class="tone-plain">
-        I build AI software that answers questions from company data, shows where its answers came from, and hands off
-        to a person when it isn't sure.
+        Software that answers questions from company data, shows where each answer came from, and hands off to a
+        person when it isn't sure.
       </span>
       <span class="tone-engineer">
         Agentic RAG on MCP tool servers and LangGraph state machines: hybrid retrieval, schema-validated tool calls,
@@ -22,15 +32,11 @@ import { profile } from "~/data/profile";
       </span>
     </p>
     <div class="actions">
-      <a class="button" href="#work">See selected work</a>
-      <button type="button" class="button quiet" data-fit-open aria-haspopup="dialog">Check my role fit</button>
+      <a class="button" href="#work">See my work</a>
+      <a class="button quiet" href="/resume/">Résumé</a>
     </div>
-    <p class="more-links">
-      <a class="link" href="/resume/">Résumé</a>
-      <a class="link" href={profile.links.github} rel="me">GitHub</a>
-      <a class="link" href={profile.links.linkedin} rel="me">LinkedIn</a>
-    </p>
   </div>
+  <slot />
   <div class="wrap stage">
     <Laptop />
   </div>
@@ -39,7 +45,7 @@ import { profile } from "~/data/profile";
 <style>
   .hero {
     overflow-x: clip;
-    padding-top: clamp(3rem, 2rem + 4vw, 6rem);
+    padding-top: clamp(2.5rem, 1.5rem + 4vw, 5.5rem);
     text-align: center;
   }
 
@@ -48,29 +54,62 @@ import { profile } from "~/data/profile";
     justify-items: center;
   }
 
-  .eyebrow {
+  /* Who you're reading about, before anything else: a face and a real title. */
+  .who {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.85rem;
+    text-align: left;
+  }
+
+  .avatar {
+    width: 56px;
+    height: 56px;
+    border-radius: 50%;
+    object-fit: cover;
+    box-shadow: 0 0 0 1px var(--glass-border), 0 6px 16px -8px rgb(var(--shadow) / 0.4);
+  }
+
+  .identity {
+    display: grid;
+    line-height: 1.25;
+  }
+
+  .name {
     font-size: var(--step-1);
     font-weight: 600;
+  }
+
+  .role {
+    font-size: var(--step--1);
     color: var(--ink-2);
   }
 
   h1 {
-    display: grid;
-    margin-top: 0.75rem;
+    margin-top: 1.5rem;
+    max-width: 16ch;
     font-size: clamp(2.6rem, 1.2rem + 4.6vw, 5rem);
     font-weight: 600;
     letter-spacing: -0.025em;
     line-height: 1.05;
   }
 
+  .tagline {
+    margin-top: 1rem;
+    font-size: clamp(1.15rem, 1rem + 0.5vw, 1.4rem);
+    font-weight: 600;
+    color: var(--auto);
+  }
+
   .intro {
-    margin-top: 1.5rem;
-    max-width: 40ch;
-    font-size: clamp(1.2rem, 1rem + 0.6vw, 1.5rem);
-    line-height: 1.4;
+    margin-top: 0.85rem;
+    max-width: 44ch;
+    font-size: var(--step-1);
+    line-height: 1.45;
     color: var(--ink-2);
   }
 
+  /* Two next steps, nothing else competing for the first decision. */
   .actions {
     display: flex;
     flex-wrap: wrap;
@@ -79,25 +118,10 @@ import { profile } from "~/data/profile";
     margin-top: 2rem;
   }
 
-  .more-links {
-    display: flex;
-    flex-wrap: wrap;
-    justify-content: center;
-    gap: 0.25rem 1.5rem;
-    margin-top: 1.25rem;
-    font-size: var(--step--1);
-  }
-
-  .more-links .link {
-    display: inline-flex;
-    align-items: center;
-    min-height: 32px;
-  }
-
   /* The product shot: compact and centred, sized like a demo, not a billboard. */
   .stage {
     max-width: 760px;
-    margin-top: clamp(2.5rem, 1.5rem + 3vw, 4rem);
+    margin-top: clamp(0.5rem, 1vw, 1.5rem);
     text-align: left;
   }
 
@@ -111,21 +135,21 @@ import { profile } from "~/data/profile";
 
   @media (prefers-reduced-motion: no-preference) {
     .copy > * {
-      animation: rise 800ms var(--ease) both;
+      animation: rise 700ms var(--ease) both;
     }
     .copy > :nth-child(2) {
-      animation-delay: 80ms;
+      animation-delay: 60ms;
     }
     .copy > :nth-child(3) {
-      animation-delay: 160ms;
+      animation-delay: 120ms;
     }
     .copy > :nth-child(n + 4) {
-      animation-delay: 240ms;
+      animation-delay: 180ms;
     }
     @keyframes rise {
       from {
         opacity: 0;
-        transform: translateY(14px);
+        transform: translateY(12px);
       }
     }
   }

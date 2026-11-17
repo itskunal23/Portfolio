@@ -12,9 +12,15 @@ import { projectBySlug } from "~/data/projects";
 <Base
   path="/about/"
   title="About"
-  description="About Kunal Goenka: AI engineer at Boeing working on agentic AI, RAG, and full-stack applications; MS Computer Science (AI) at Georgia Tech; BS Business Information Technology, Virginia Tech."
+  description="About Kunal Goenka: Data Scientist, Enterprise AI & Data at Boeing, working on agentic AI, RAG, and full-stack applications; MS Computer Science (AI) at Georgia Tech; BS Business Information Technology, Virginia Tech."
 >
   <div class="wrap intro">
+    <nav class="crumbs" aria-label="Breadcrumb">
+      <ol>
+        <li><a href="/">Home</a></li>
+        <li aria-current="page">About</li>
+      </ol>
+    </nav>
     <div class="intro-text">
       <h1>About</h1>
       <p class="lede">{profile.philosophy}</p>
@@ -149,6 +155,44 @@ import { projectBySlug } from "~/data/projects";
     gap: 2rem clamp(2rem, 1rem + 4vw, 6rem);
     align-items: end;
     padding-block: clamp(3rem, 2rem + 4vw, 6rem) clamp(2rem, 1rem + 2vw, 3rem);
+  }
+
+  .crumbs {
+    margin-bottom: 0.5rem;
+  }
+
+  .crumbs ol {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 0.25rem 0.5rem;
+    list-style: none;
+    font-size: var(--step--1);
+    color: var(--ink-2);
+  }
+
+  .crumbs li + li::before {
+    content: "/";
+    color: var(--ink-2);
+  }
+
+  .crumbs a {
+    display: inline-flex;
+    align-items: center;
+    min-height: 44px;
+    min-width: 44px;
+    padding-inline: 0.25rem;
+    text-decoration: none;
+  }
+
+  @media (hover: hover) {
+    .crumbs a:hover {
+      color: var(--auto);
+    }
+  }
+
+  .crumbs [aria-current="page"] {
+    color: var(--ink);
+    pointer-events: none;
   }
 
   h1 {
