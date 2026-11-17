@@ -15,7 +15,7 @@ p{margin-top:24px;font-size:40px;line-height:1.2;letter-spacing:-0.02em;max-widt
 </style></head><body>
 <div><h1>Kunal Goenka</h1><p>I build software at the intersection of AI systems, design, and how people think.</p></div>
 <div><div class="row">${nodes.map((n, i) => `<span class="n ${i === nodes.length - 1 ? "out" : "lit"}">${n}</span>${i < nodes.length - 1 ? '<span class="e"></span>' : ""}`).join("")}</div>
-<div class="meta" style="margin-top:28px">Agentic AI at Boeing. MS Computer Science, Georgia Tech.</div></div>
+<div class="meta" style="margin-top:28px">AI Engineer at Boeing. MS Computer Science, Georgia Tech.</div></div>
 </body></html>`;
 
 const browser = await chromium.launch({ channel: "chrome" });
