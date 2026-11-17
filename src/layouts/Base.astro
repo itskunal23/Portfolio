@@ -16,7 +16,7 @@ interface Props {
 }
 
 const { title, description = profile.description, path, schema = [], noindex = false } = Astro.props;
-const fullTitle = title ? `${title} | Kunal Goenka` : "Kunal Goenka | Data Scientist, Enterprise AI & Data at Boeing";
+const fullTitle = title ? `${title} | Kunal Goenka` : "Kunal Goenka | AI Engineer at Boeing";
 const canonical = new URL(path, Astro.site).toString();
 const ogImage = new URL("/og.png", Astro.site).toString();
 
@@ -27,13 +27,13 @@ const person = {
   name: profile.name,
   url: new URL("/", Astro.site).toString(),
   image: new URL("/kunal-goenka.jpg", Astro.site).toString(),
-  jobTitle: "Data Scientist, Enterprise AI & Data",
+  jobTitle: "AI Engineer",
   worksFor: { "@type": "Organization", name: "Boeing" },
   alumniOf: [
     { "@type": "CollegeOrUniversity", name: "Virginia Tech" }
   ],
   affiliation: { "@type": "CollegeOrUniversity", name: "Georgia Institute of Technology" },
-  knowsAbout: ["Agentic AI", "Retrieval-augmented generation", "Model Context Protocol", "Natural language processing", "Full-stack development"],
+  knowsAbout: ["AI Engineering", "Retrieval-augmented generation", "Model Context Protocol", "Natural language processing", "Full-stack development", "Agentic systems"],
   email: `mailto:${profile.email}`,
   sameAs: [profile.links.linkedin, profile.links.github]
 };

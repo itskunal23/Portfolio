@@ -7,10 +7,10 @@ export const profile = {
   name: "Kunal Goenka",
   // One title everywhere, matching LinkedIn and the résumé: recruiters search
   // and background checks verify the real title, so it is never paraphrased.
-  headline: "Data Scientist, Enterprise AI & Data at Boeing. Georgia Tech OMSCS.",
+  headline: "AI Engineer at Boeing. Georgia Tech OMSCS.",
   philosophy: "I build software at the intersection of AI systems, design, and how people think.",
   location: "Washington DC–Baltimore Area",
-  role: "Data Scientist, Enterprise AI & Data at Boeing",
+  role: "AI Engineer at Boeing",
   email: "k.goenka23@gmail.com",
   links: {
     linkedin: "https://www.linkedin.com/in/kunalgoenka23/",
@@ -20,9 +20,9 @@ export const profile = {
   },
   /** Résumé summary, in Kunal's words from the résumé he supplied (November 2026). */
   summary:
-    "AI engineer specializing in agentic systems, Model Context Protocol (MCP) integrations, and enterprise RAG across regulated environments like Azure Government Cloud. I take ambiguous operational bottlenecks from problem discovery to production software.",
+    "AI engineer building production AI systems at Boeing: agentic RAG on MCP tool servers, entity resolution, document ingestion on S3, and full-stack work on Azure Government Cloud. I take ambiguous operational bottlenecks from problem discovery to production software.",
   description:
-    "Kunal Goenka builds agentic AI systems at Boeing: Model Context Protocol (MCP) integrations and enterprise RAG in regulated environments like Azure Government Cloud, taken from problem discovery to production software. MS Computer Science (AI) at Georgia Tech."
+    "Kunal Goenka is an AI Engineer at Boeing building production AI systems: agentic RAG on MCP tool servers, entity resolution, document ingestion on S3, and full-stack work on Azure Government Cloud. MS Computer Science (AI) at Georgia Tech."
 } as const;
 
 /**
