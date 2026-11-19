@@ -353,14 +353,14 @@ test.describe("hero", () => {
     await page.goto("/");
     const hero = page.locator(".hero .copy");
     await expect(hero.getByText("Kunal Goenka", { exact: true })).toBeVisible();
-    await expect(hero.getByText("Data Scientist, Enterprise AI & Data at Boeing")).toBeVisible();
-    await expect(page.getByRole("heading", { level: 1 })).toHaveText("I build agentic AI systems at Boeing.");
+    await expect(hero.getByText("AI Engineer at Boeing", { exact: true })).toBeVisible();
+    await expect(page.getByRole("heading", { level: 1 })).toHaveText("AI Engineer at Boeing.");
     await expect(hero.locator(".actions").getByRole("link")).toHaveText(["See my work", "Résumé"]);
     await expect(hero.locator("a, button")).toHaveCount(2);
     const proofTop = await page.getByRole("region", { name: "Results at a glance" }).evaluate((e) => e.getBoundingClientRect().top);
     const laptopTop = await page.locator("[data-laptop]").evaluate((e) => e.getBoundingClientRect().top);
     expect(proofTop).toBeLessThan(laptopTop);
-    await expect(page).toHaveTitle("Kunal Goenka | Data Scientist, Enterprise AI & Data at Boeing");
+    await expect(page).toHaveTitle("Kunal Goenka | AI Engineer at Boeing");
   });
 });
 
